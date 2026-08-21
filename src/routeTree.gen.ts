@@ -14,6 +14,7 @@ import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConversacionesRouteImport } from './routes/conversaciones'
 import { Route as PagosRouteImport } from './routes/pagos'
 import { Route as PedidosRouteImport } from './routes/pedidos'
+import { Route as PlantillasRouteImport } from './routes/plantillas'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +41,11 @@ const PedidosRoute = PedidosRouteImport.update({
   path: '/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlantillasRoute = PlantillasRouteImport.update({
+  id: '/plantillas',
+  path: '/plantillas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
+  '/plantillas': typeof PlantillasRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
+  '/plantillas': typeof PlantillasRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
+  '/plantillas': typeof PlantillasRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
+  fullPaths:
+    | '/'
+    | '/clientes'
+    | '/conversaciones'
+    | '/pagos'
+    | '/pedidos'
+    | '/plantillas'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
-  id: '__root__' | '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
+  to:
+    | '/'
+    | '/clientes'
+    | '/conversaciones'
+    | '/pagos'
+    | '/pedidos'
+    | '/plantillas'
+  id:
+    | '__root__'
+    | '/'
+    | '/clientes'
+    | '/conversaciones'
+    | '/pagos'
+    | '/pedidos'
+    | '/plantillas'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   ConversacionesRoute: typeof ConversacionesRoute
   PagosRoute: typeof PagosRoute
   PedidosRoute: typeof PedidosRoute
+  PlantillasRoute: typeof PlantillasRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/plantillas': {
+      id: '/plantillas'
+      path: '/plantillas'
+      fullPath: '/plantillas'
+      preLoaderRoute: typeof PlantillasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConversacionesRoute: ConversacionesRoute,
   PagosRoute: PagosRoute,
   PedidosRoute: PedidosRoute,
+  PlantillasRoute: PlantillasRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
