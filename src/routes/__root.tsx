@@ -77,14 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "PedidoFlow — CRM contraentrega para tiendas en Perú" },
+      {
+        name: "description",
+        content:
+          "CRM que confirma pedidos contraentrega por WhatsApp, verifica adelantos y genera guías Shalom para tiendas Shopify en Perú.",
+      },
+      { name: "author", content: "PedidoFlow" },
+      { property: "og:title", content: "PedidoFlow — CRM contraentrega para tiendas en Perú" },
+      {
+        property: "og:description",
+        content: "Confirma pedidos por WhatsApp, verifica pagos y despacha más rápido.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
