@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConversacionesRouteImport } from './routes/conversaciones'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConversacionesRoute = ConversacionesRouteImport.update({
+  id: '/conversaciones',
+  path: '/conversaciones',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PedidosRoute = PedidosRouteImport.update({
@@ -25,27 +31,31 @@ const PedidosRoute = PedidosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conversaciones': typeof ConversacionesRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conversaciones': typeof ConversacionesRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conversaciones': typeof ConversacionesRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/pedidos'
+  fullPaths: '/' | '/conversaciones' | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/pedidos'
-  id: '__root__' | '/' | '/pedidos'
+  to: '/' | '/conversaciones' | '/pedidos'
+  id: '__root__' | '/' | '/conversaciones' | '/pedidos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConversacionesRoute: typeof ConversacionesRoute
   PedidosRoute: typeof PedidosRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conversaciones': {
+      id: '/conversaciones'
+      path: '/conversaciones'
+      fullPath: '/conversaciones'
+      preLoaderRoute: typeof ConversacionesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pedidos': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConversacionesRoute: ConversacionesRoute,
   PedidosRoute: PedidosRoute,
 }
 export const routeTree = rootRouteImport
