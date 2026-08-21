@@ -60,7 +60,7 @@ export const DELIVERY_STATUS: Record<DeliveryStatus, string> = {
 
 export type TimelineStep = {
   label: string;
-  time?: string;
+  time?: string | undefined;
   done: boolean;
 };
 
