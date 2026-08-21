@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConversacionesRouteImport } from './routes/conversaciones'
+import { Route as PagosRouteImport } from './routes/pagos'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const ConversacionesRoute = ConversacionesRouteImport.update({
   path: '/conversaciones',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagosRoute = PagosRouteImport.update({
+  id: '/pagos',
+  path: '/pagos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PedidosRoute = PedidosRouteImport.update({
   id: '/pedidos',
   path: '/pedidos',
@@ -32,30 +38,34 @@ const PedidosRoute = PedidosRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/conversaciones' | '/pedidos'
+  fullPaths: '/' | '/conversaciones' | '/pagos' | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conversaciones' | '/pedidos'
-  id: '__root__' | '/' | '/conversaciones' | '/pedidos'
+  to: '/' | '/conversaciones' | '/pagos' | '/pedidos'
+  id: '__root__' | '/' | '/conversaciones' | '/pagos' | '/pedidos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ConversacionesRoute: typeof ConversacionesRoute
+  PagosRoute: typeof PagosRoute
   PedidosRoute: typeof PedidosRoute
 }
 
@@ -75,6 +85,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConversacionesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pagos': {
+      id: '/pagos'
+      path: '/pagos'
+      fullPath: '/pagos'
+      preLoaderRoute: typeof PagosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pedidos': {
       id: '/pedidos'
       path: '/pedidos'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ConversacionesRoute: ConversacionesRoute,
+  PagosRoute: PagosRoute,
   PedidosRoute: PedidosRoute,
 }
 export const routeTree = rootRouteImport
