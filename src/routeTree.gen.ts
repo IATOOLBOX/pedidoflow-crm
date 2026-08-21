@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConversacionesRouteImport } from './routes/conversaciones'
 import { Route as PagosRouteImport } from './routes/pagos'
 import { Route as PedidosRouteImport } from './routes/pedidos'
@@ -17,6 +18,11 @@ import { Route as PedidosRouteImport } from './routes/pedidos'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversacionesRoute = ConversacionesRouteImport.update({
@@ -37,12 +43,14 @@ const PedidosRoute = PedidosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/conversaciones' | '/pagos' | '/pedidos'
+  fullPaths: '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conversaciones' | '/pagos' | '/pedidos'
-  id: '__root__' | '/' | '/conversaciones' | '/pagos' | '/pedidos'
+  to: '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
+  id: '__root__' | '/' | '/clientes' | '/conversaciones' | '/pagos' | '/pedidos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ClientesRoute: typeof ClientesRoute
   ConversacionesRoute: typeof ConversacionesRoute
   PagosRoute: typeof PagosRoute
   PedidosRoute: typeof PedidosRoute
@@ -76,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversaciones': {
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ClientesRoute: ClientesRoute,
   ConversacionesRoute: ConversacionesRoute,
   PagosRoute: PagosRoute,
   PedidosRoute: PedidosRoute,
