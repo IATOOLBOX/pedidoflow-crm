@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConversacionesRouteImport } from './routes/conversaciones'
+import { Route as IntegracionesRouteImport } from './routes/integraciones'
 import { Route as PagosRouteImport } from './routes/pagos'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as PlantillasRouteImport } from './routes/plantillas'
@@ -29,6 +30,11 @@ const ClientesRoute = ClientesRouteImport.update({
 const ConversacionesRoute = ConversacionesRouteImport.update({
   id: '/conversaciones',
   path: '/conversaciones',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IntegracionesRoute = IntegracionesRouteImport.update({
+  id: '/integraciones',
+  path: '/integraciones',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PagosRoute = PagosRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/conversaciones': typeof ConversacionesRoute
+  '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/conversaciones'
+    | '/integraciones'
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/conversaciones'
+    | '/integraciones'
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/conversaciones'
+    | '/integraciones'
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientesRoute: typeof ClientesRoute
   ConversacionesRoute: typeof ConversacionesRoute
+  IntegracionesRoute: typeof IntegracionesRoute
   PagosRoute: typeof PagosRoute
   PedidosRoute: typeof PedidosRoute
   PlantillasRoute: typeof PlantillasRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/conversaciones'
       fullPath: '/conversaciones'
       preLoaderRoute: typeof ConversacionesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/integraciones': {
+      id: '/integraciones'
+      path: '/integraciones'
+      fullPath: '/integraciones'
+      preLoaderRoute: typeof IntegracionesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pagos': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientesRoute: ClientesRoute,
   ConversacionesRoute: ConversacionesRoute,
+  IntegracionesRoute: IntegracionesRoute,
   PagosRoute: PagosRoute,
   PedidosRoute: PedidosRoute,
   PlantillasRoute: PlantillasRoute,
