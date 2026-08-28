@@ -971,63 +971,319 @@ export const customers: Customer[] = [
   },
 ];
 
+export type TemplateButton = {
+  type: "QUICK_REPLY" | "URL" | "PHONE_NUMBER";
+  text: string;
+  url?: string;
+  phone?: string;
+};
+
+export type FunctionalCategory =
+  | "confirmacion"
+  | "rompe_vistos"
+  | "logistica"
+  | "marketing"
+  | "finanzas";
+
 export type Template = {
   id: string;
   name: string;
   category: "Marketing" | "Utilidad" | "Autenticación";
+  functionalCategory: FunctionalCategory;
   status: "Aprobada" | "En revisión" | "Rechazada";
+  headerType?: "text" | "image" | "video" | "document" | undefined;
+  headerText?: string | undefined;
+  headerMediaName?: string | undefined;
   body: string;
+  footer?: string | undefined;
+  buttons?: TemplateButton[] | undefined;
   sent: number;
+  readRate?: number | undefined;
+  clickRate?: number | undefined;
+  rejectionReason?: string | undefined;
+  updatedAt?: string | undefined;
 };
 
 export const templates: Template[] = [
+  // 1. CONFIRMACIÓN
   {
     id: "t1",
     name: "confirmacion_pedido_v3",
     category: "Utilidad",
+    functionalCategory: "confirmacion",
     status: "Aprobada",
-    body: "Hola {{nombre_cliente}} 👋 Recibimos tu pedido {{numero_pedido}} por {{monto}}. ¿Confirmas la compra contraentrega?",
-    sent: 1284,
+    headerType: "text",
+    headerText: "Tienda Andina — Confirmación de Compra",
+    body: "¡Hola {{nombre_cliente}}! 👋 Recibimos tu pedido #{{numero_pedido}} de {{productos}} por un total de S/ {{monto}} con pago contraentrega en {{direccion}} ({{ciudad}}). ¿Confirmas los datos para programar tu entrega?",
+    footer: "PedidoFlow · Delivery Seguro",
+    buttons: [
+      { type: "QUICK_REPLY", text: "✅ Sí, confirmo mi pedido" },
+      { type: "QUICK_REPLY", text: "❌ Deseo modificar datos" },
+    ],
+    sent: 1482,
+    readRate: 94,
+    clickRate: 81,
+    updatedAt: "Hace 2 días",
   },
   {
     id: "t2",
-    name: "recordatorio_confirmacion",
+    name: "pedido_preliminar_carrito",
     category: "Utilidad",
+    functionalCategory: "confirmacion",
     status: "Aprobada",
-    body: "{{nombre_cliente}}, tu pedido {{numero_pedido}} sigue pendiente de confirmar. Responde SÍ para separarlo hoy.",
-    sent: 902,
+    body: "Hola {{nombre_cliente}} 👋 Vimos que dejaste un pedido preliminar de {{productos}} por S/ {{monto}}. ¿Deseas que te lo separemos con pago contraentrega antes de agotar existencias?",
+    footer: "Responde este mensaje para atenderte",
+    buttons: [
+      { type: "QUICK_REPLY", text: "📦 Confirmar mi compra" },
+      { type: "QUICK_REPLY", text: "💬 Hablar con un asesor" },
+    ],
+    sent: 904,
+    readRate: 91,
+    clickRate: 74,
+    updatedAt: "Hace 5 días",
   },
   {
-    id: "t3",
-    name: "solicitud_adelanto_agencia",
+    id: "t7",
+    name: "verificacion_cobertura_referencia",
     category: "Utilidad",
+    functionalCategory: "confirmacion",
     status: "Aprobada",
-    body: "Para enviarte por agencia necesitamos un adelanto de {{monto_adelanto}}. Yapea al 987 111 222 y envíanos la captura 🙌",
-    sent: 618,
+    body: "{{nombre_cliente}}, para asegurar la llegada exacta de nuestro repartidor a {{distrito}}, ¿podrías brindarnos una referencia cercana o cruce de calles de tu dirección?",
+    footer: "Tienda Andina Logística",
+    buttons: [
+      { type: "QUICK_REPLY", text: "📍 Enviar referencia" },
+      { type: "QUICK_REPLY", text: "Cambiar fecha de entrega" },
+    ],
+    sent: 430,
+    readRate: 92,
+    clickRate: 69,
+    updatedAt: "Hace 1 semana",
   },
+
+  // 2. ROMPE-VISTOS & RECUPERACIÓN
+  {
+    id: "t8",
+    name: "rompe_visto_cupon_descuento",
+    category: "Marketing",
+    functionalCategory: "rompe_vistos",
+    status: "Aprobada",
+    headerType: "image",
+    headerMediaName: "promo_medias_bamboo.jpg",
+    body: "¡Hola {{nombre_cliente}}! 🔥 Vimos que te quedaste a un paso de separar tu pedido de {{productos}}. Para que no te quedes sin stock, hoy te activamos el cupón exclusivo [{{cupon}}] con delivery gratis.",
+    footer: "Válido por 12 horas",
+    buttons: [
+      { type: "QUICK_REPLY", text: "🎁 Aprovechar cupón ahora" },
+      { type: "QUICK_REPLY", text: "No por el momento" },
+    ],
+    sent: 780,
+    readRate: 88,
+    clickRate: 63,
+    updatedAt: "Hace 3 días",
+  },
+  {
+    id: "t9",
+    name: "rompe_visto_stock_critico",
+    category: "Marketing",
+    functionalCategory: "rompe_vistos",
+    status: "Aprobada",
+    body: "⚠️ {{nombre_cliente}}, solo nos quedan las últimas 2 unidades de {{productos}} para despacho hoy. ¿Deseas que mantengamos tu paquete reservado o liberamos el stock a otro cliente?",
+    buttons: [
+      { type: "QUICK_REPLY", text: "⚡ Mantener mi paquete" },
+      { type: "QUICK_REPLY", text: "Liberar pedido" },
+    ],
+    sent: 512,
+    readRate: 89,
+    clickRate: 58,
+    updatedAt: "Hace 4 días",
+  },
+  {
+    id: "t10",
+    name: "rompe_visto_renegociacion_fecha",
+    category: "Utilidad",
+    functionalCategory: "rompe_vistos",
+    status: "En revisión",
+    body: "Hola {{nombre_cliente}}, entendemos que hoy puedes estar ocupado. ¿Te gustaría coordinar la entrega de {{productos}} para este fin de semana o cuando estés disponible en casa?",
+    footer: "Horarios flexibles de entrega",
+    buttons: [
+      { type: "QUICK_REPLY", text: "🗓️ Programar para el sábado" },
+      { type: "QUICK_REPLY", text: "Elegir otra fecha" },
+    ],
+    sent: 0,
+    readRate: 0,
+    clickRate: 0,
+    updatedAt: "Enviado hace 3 horas",
+  },
+
+  // 3. LOGÍSTICA & DESPACHO
   {
     id: "t4",
     name: "guia_shalom_generada",
     category: "Utilidad",
+    functionalCategory: "logistica",
+    status: "Aprobada",
+    headerType: "text",
+    headerText: "🚚 ¡Tu pedido ya fue despachado por Shalom!",
+    body: "¡Buenas noticias {{nombre_cliente}}! 📦 Tu pedido de {{productos}} ya se encuentra en camino por agencia {{agencia}}.\n\n🔢 Número de Guía: {{codigo_guia}}\n🏢 Destino: Agencia {{ciudad}}\n💰 Saldo a cancelar al recoger: S/ {{monto}}\n\nPuedes consultar el estado de tu guía en cualquier momento.",
+    footer: "Conserva tu número de guía",
+    buttons: [
+      { type: "URL", text: "🔎 Rastrear en Shalom", url: "https://shalom.pe/rastreo" },
+      { type: "QUICK_REPLY", text: "💬 Consulta sobre el envío" },
+    ],
+    sent: 1120,
+    readRate: 98,
+    clickRate: 87,
+    updatedAt: "Aprobada recientemente",
+  },
+  {
+    id: "t11",
+    name: "aviso_llegada_agencia_dni",
+    category: "Utilidad",
+    functionalCategory: "logistica",
+    status: "Aprobada",
+    headerType: "text",
+    headerText: "🏢 Tu paquete está listo para recojo",
+    body: "¡Hola {{nombre_cliente}}! 📦 Tu paquete llegó a la agencia {{agencia}} de {{ciudad}} y ya está disponible en ventanilla.\n\n🔢 Guía: {{codigo_guia}}\n⚠️ IMPORTANTE: Recuerda presentar tu DNI FÍSICO en ventanilla para retirar tu paquete.\n\nHorario de atención: Lun a Sáb de 8:00 AM a 6:00 PM.",
+    footer: "Evita el retorno de tu paquete",
+    buttons: [
+      { type: "QUICK_REPLY", text: "✅ Recojo hoy mismo" },
+      { type: "QUICK_REPLY", text: "Iré mañana por la mañana" },
+    ],
+    sent: 890,
+    readRate: 97,
+    clickRate: 84,
+    updatedAt: "Hace 1 día",
+  },
+  {
+    id: "t12",
+    name: "repartidor_contraentrega_en_ruta",
+    category: "Utilidad",
+    functionalCategory: "logistica",
+    status: "Aprobada",
+    body: "🛵 ¡Hola {{nombre_cliente}}! Nuestro repartidor está en ruta hacia tu dirección {{direccion}}. Llegará en el transcurso de las próximas horas. Ten a la mano el monto exacto de S/ {{monto}} en efectivo o Yape.",
+    buttons: [
+      { type: "QUICK_REPLY", text: "👍 Estaré atento en casa" },
+      { type: "QUICK_REPLY", text: "Dejar con recepción/familiar" },
+    ],
+    sent: 670,
+    readRate: 96,
+    clickRate: 79,
+    updatedAt: "Hace 4 días",
+  },
+  {
+    id: "t13",
+    name: "incidencia_retraso_recojo_shalom",
+    category: "Utilidad",
+    functionalCategory: "logistica",
     status: "En revisión",
-    body: "¡Listo {{nombre_cliente}}! Tu guía Shalom es {{codigo_guia}}. Puedes recogerla en la agencia de {{ciudad}}.",
+    body: "⚠️ Aviso urgente {{nombre_cliente}}: Tu paquete con guía {{codigo_guia}} lleva 48h en la agencia {{agencia}} sin ser retirado. Las agencias retornan paquetes al 4to día. ¿Podrás acercarte hoy a recogerlo?",
+    buttons: [
+      { type: "QUICK_REPLY", text: "🏃 Voy en camino a recoger" },
+      { type: "QUICK_REPLY", text: "Enviar a un apoderado con carta" },
+    ],
     sent: 0,
+    readRate: 0,
+    clickRate: 0,
+    updatedAt: "Enviado hace 6 horas",
+  },
+
+  // 4. FINANZAS & COBRANZA
+  {
+    id: "t3",
+    name: "solicitud_adelanto_agencia",
+    category: "Utilidad",
+    functionalCategory: "finanzas",
+    status: "Aprobada",
+    headerType: "text",
+    headerText: "Garantía de Despacho a Provincia",
+    body: "Hola {{nombre_cliente}} 🙌 Para despacharte por agencia {{agencia}} requerimos un adelanto de flete de S/ {{monto_adelanto}}. El saldo de S/ {{monto_saldo}} lo cancelas al retirar tu paquete en la agencia.\n\nPuedes yapear al 987 111 222 a nombre de Tienda Andina y adjuntar la captura aquí.",
+    footer: "Pago seguro y verificado",
+    buttons: [
+      { type: "QUICK_REPLY", text: "📲 Ya envié la captura" },
+      { type: "QUICK_REPLY", text: "Solicitar número de cuenta BCP" },
+    ],
+    sent: 618,
+    readRate: 93,
+    clickRate: 71,
+    updatedAt: "Hace 2 semanas",
+  },
+  {
+    id: "t14",
+    name: "pago_adelanto_confirmado_recibo",
+    category: "Utilidad",
+    functionalCategory: "finanzas",
+    status: "Aprobada",
+    body: "¡Pago confirmado {{nombre_cliente}}! 🎉 Recibimos tu adelanto de S/ {{monto_adelanto}} con éxito. Tu pedido #{{numero_pedido}} ha pasado al área de empaque prioritario.",
+    footer: "Gracias por tu confianza",
+    buttons: [
+      { type: "QUICK_REPLY", text: "📦 Ver estado de empaque" },
+    ],
+    sent: 580,
+    readRate: 99,
+    clickRate: 65,
+    updatedAt: "Hace 1 semana",
+  },
+
+  // 5. MARKETING & UPSELLS
+  {
+    id: "t15",
+    name: "upsell_catalogo_temporada_pdf",
+    category: "Marketing",
+    functionalCategory: "marketing",
+    status: "Aprobada",
+    headerType: "document",
+    headerMediaName: "Catalogo_Temporada_2026.pdf",
+    body: "¡Hola {{nombre_cliente}}! 🌟 Te compartimos en exclusiva nuestro Catálogo Completo de Temporada en PDF con promociones especiales de hasta 30% OFF en productos seleccionados.",
+    footer: "Válido para compras este mes",
+    buttons: [
+      { type: "QUICK_REPLY", text: "📄 Abrir Catálogo PDF" },
+      { type: "QUICK_REPLY", text: "Quiero consultar una oferta" },
+    ],
+    sent: 430,
+    readRate: 85,
+    clickRate: 52,
+    updatedAt: "Hace 3 días",
+  },
+  {
+    id: "t16",
+    name: "agradecimiento_entrega_recompra",
+    category: "Marketing",
+    functionalCategory: "marketing",
+    status: "Aprobada",
+    body: "¡Esperamos que disfrutes tu compra {{nombre_cliente}}! 🎉 Como cliente preferente, tienes S/ 20.00 de descuento en tu próximo pedido usando el cupón [GRACIAS20]. ¿Te gustaría ver las novedades de la semana?",
+    buttons: [
+      { type: "QUICK_REPLY", text: "🎁 Ver novedades con cupón" },
+      { type: "QUICK_REPLY", text: "Calificar el servicio" },
+    ],
+    sent: 340,
+    readRate: 89,
+    clickRate: 48,
+    updatedAt: "Hace 5 días",
   },
   {
     id: "t5",
-    name: "promo_fin_de_semana",
+    name: "promo_fin_de_semana_urgencia",
     category: "Marketing",
+    functionalCategory: "marketing",
     status: "Rechazada",
-    body: "{{nombre_cliente}}, 30% de descuento solo este finde en toda la tienda 🔥 Responde PROMO.",
+    body: "{{nombre_cliente}}, 30% de descuento solo este finde en toda la tienda 🔥 ¡Compra ya antes de que se agote todo! Responde PROMO.",
+    rejectionReason: "Meta rechazó la plantilla debido a políticas de formato: El texto contiene caracteres que inducen urgencia engañosa y falta de especificación del producto o servicio ofrecido.",
     sent: 0,
+    readRate: 0,
+    clickRate: 0,
+    updatedAt: "Rechazada por Meta",
   },
   {
     id: "t6",
-    name: "codigo_verificacion",
+    name: "codigo_verificacion_seguridad",
     category: "Autenticación",
+    functionalCategory: "confirmacion",
     status: "Aprobada",
-    body: "Tu código de verificación es {{codigo}}. No lo compartas con nadie.",
+    body: "Tu código de verificación de Tienda Andina es {{codigo}}. No compartas este código con nadie por seguridad.",
+    footer: "Seguridad de Cuenta",
     sent: 210,
+    readRate: 98,
+    clickRate: 0,
+    updatedAt: "Hace 1 mes",
   },
 ];
 
@@ -1038,4 +1294,61 @@ export const activity = [
   { id: "a4", text: "Luis Fernández no respondió al 3er recordatorio", time: "hace 1 h", tone: "sh_no_responden" as OrderStatus },
   { id: "a5", text: "Pedido #1242 anulado por el vendedor", time: "hace 2 h", tone: "sh_descartado" as OrderStatus },
   { id: "a6", text: "Rosa Huamán envió su DNI para la agencia", time: "hace 3 h", tone: "wa_entrante" as OrderStatus },
+];
+
+export type UserRole = "Administrador" | "Ventas" | "Logística";
+export type UserStatus = "Activo" | "Inactivo";
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  lastActive: string;
+  avatar: string;
+  permissions: string[];
+};
+
+export const users: User[] = [
+  {
+    id: "usr1",
+    name: "Andrea Vega",
+    email: "andrea@tiendaandina.pe",
+    role: "Administrador",
+    status: "Activo",
+    lastActive: "En línea",
+    avatar: "AV",
+    permissions: ["all"],
+  },
+  {
+    id: "usr2",
+    name: "Luis Castillo",
+    email: "luis.ventas@tiendaandina.pe",
+    role: "Ventas",
+    status: "Activo",
+    lastActive: "Hace 15 min",
+    avatar: "LC",
+    permissions: ["view_orders", "edit_orders", "send_messages", "approve_payments"],
+  },
+  {
+    id: "usr3",
+    name: "Carmen Rojas",
+    email: "carmen.logistica@tiendaandina.pe",
+    role: "Logística",
+    status: "Activo",
+    lastActive: "Hace 2 horas",
+    avatar: "CR",
+    permissions: ["view_orders", "update_delivery_status", "generate_labels"],
+  },
+  {
+    id: "usr4",
+    name: "Diego Sánchez",
+    email: "diego.ventas@tiendaandina.pe",
+    role: "Ventas",
+    status: "Inactivo",
+    lastActive: "Hace 3 días",
+    avatar: "DS",
+    permissions: ["view_orders", "edit_orders", "send_messages"],
+  },
 ];

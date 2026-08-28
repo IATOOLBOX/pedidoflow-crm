@@ -16,8 +16,8 @@ import {
   Truck,
   Workflow,
   Sun,
-  CloudMoon,
   Moon,
+  ShieldCheck,
 } from "lucide-react";
 import { payments } from "@/lib/mock-data";
 
@@ -33,6 +33,7 @@ const nav = [
   { to: "/workflows", label: "Workflows", icon: Workflow },
   { to: "/plantillas", label: "Plantillas de WhatsApp", icon: FileText },
   { to: "/integraciones", label: "Integraciones", icon: Plug },
+  { to: "/equipo", label: "Equipo y Roles", icon: ShieldCheck },
   { to: "/configuracion", label: "Configuración", icon: Settings },
 ] as const;
 
