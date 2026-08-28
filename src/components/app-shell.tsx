@@ -16,13 +16,16 @@ import {
   Truck,
   Workflow,
   Sun,
+  CloudMoon,
   Moon,
-  ShieldCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { payments } from "@/lib/mock-data";
 
 export type ThemeMode = "normal" | "dim" | "dark";
 
+// "Equipo y Roles" removido del menú principal (ahora exclusivo dentro de Configuración)
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingBag },
@@ -33,7 +36,6 @@ const nav = [
   { to: "/workflows", label: "Workflows", icon: Workflow },
   { to: "/plantillas", label: "Plantillas de WhatsApp", icon: FileText },
   { to: "/integraciones", label: "Integraciones", icon: Plug },
-  { to: "/equipo", label: "Equipo y Roles", icon: ShieldCheck },
   { to: "/configuracion", label: "Configuración", icon: Settings },
 ] as const;
 
@@ -50,6 +52,25 @@ export function AppShell({
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  // Estado de Colapso/Minimizado de la Barra Lateral
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("pedidoflow_sidebar_collapsed") === "true";
+    }
+    return false;
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("pedidoflow_sidebar_collapsed", String(next));
+      }
+      return next;
+    });
+  };
+
+  // Selector de Temas
   const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
     if (typeof window !== "undefined") {
       return (localStorage.getItem("pedidoflow_theme") as ThemeMode) || "normal";
@@ -78,57 +99,104 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
-        <div className="flex items-center gap-2.5 px-5 py-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-            <ShoppingBag className="h-5 w-5" strokeWidth={2} />
-          </div>
-          <div className="leading-tight">
-            <p className="text-[15px] font-bold text-sidebar-accent-foreground">PedidoFlow</p>
-            <p className="text-[11px] text-sidebar-foreground/60">CRM contraentrega</p>
-          </div>
+      {/* BARRA LATERAL CON MODO EXPANDIDO Y MINIMIZADO / COLAPSADO */}
+      <aside
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200 lg:flex ${
+          isSidebarCollapsed ? "w-16" : "w-64"
+        }`}
+      >
+        {/* LOGO Y BOTÓN PEQUEÑO DE MINIMIZAR HACIA LA IZQUIERDA */}
+        <div className="flex items-center justify-between px-3.5 py-4 border-b border-sidebar-border/50">
+          {!isSidebarCollapsed ? (
+            <div className="flex items-center gap-2.5 px-1">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-xs">
+                <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+              </div>
+              <div className="leading-tight">
+                <p className="text-[15px] font-bold text-sidebar-accent-foreground">PedidoFlow</p>
+                <p className="text-[11px] text-sidebar-foreground/60">CRM contraentrega</p>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+              <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+            </div>
+          )}
+
+          {/* BOTÓN RÁPIDO DE MINIMIZAR / EXPANDIR */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className={`rounded-lg p-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition cursor-pointer ${
+              isSidebarCollapsed ? "mx-auto mt-2" : ""
+            }`}
+            title={isSidebarCollapsed ? "Expandir menú principal" : "Minimizar menú lateral a la izquierda"}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </button>
         </div>
 
-        <nav className="flex-1 space-y-1 px-3 py-2">
+        {/* NAVEGACIÓN PRINCIPAL */}
+        <nav className="flex-1 space-y-1 px-2.5 py-3 overflow-y-auto">
           {nav.map((item) => {
             const active = item.to === "/" ? pathname === "/" : pathname.startsWith(item.to);
             const Icon = item.icon;
+
             return (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                title={isSidebarCollapsed ? item.label : undefined}
+                className={`flex items-center rounded-xl px-3 py-2.5 text-sm transition-all ${
+                  isSidebarCollapsed ? "justify-center" : "gap-3"
+                } ${
                   active
-                    ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-2xs"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 }`}
               >
                 <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
-                <span className="flex-1 truncate">{item.label}</span>
-                {"badge" in item && item.badge ? (
-                  <span className="rounded-full bg-status-compromiso px-1.5 py-0.5 text-[10px] font-bold text-sidebar">
-                    {item.badge}
-                  </span>
-                ) : null}
+                {!isSidebarCollapsed && (
+                  <>
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {"badge" in item && item.badge ? (
+                      <span className="rounded-full bg-status-compromiso px-1.5 py-0.5 text-[10px] font-bold text-sidebar">
+                        {item.badge}
+                      </span>
+                    ) : null}
+                  </>
+                )}
               </Link>
             );
           })}
         </nav>
 
-        <div className="m-3 rounded-xl bg-sidebar-accent/60 p-3">
-          <p className="text-xs font-semibold text-sidebar-accent-foreground">Plan Crece</p>
-          <p className="mt-0.5 text-[11px] text-sidebar-foreground/70">
-            1,840 / 3,000 conversaciones
-          </p>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sidebar-border">
-            <div className="h-full w-[61%] rounded-full bg-sidebar-primary" />
+        {/* INFORME DEL PLAN O INDICADOR MINIMIZADO */}
+        {!isSidebarCollapsed ? (
+          <div className="m-3 rounded-xl bg-sidebar-accent/60 p-3 border border-sidebar-border/50">
+            <p className="text-xs font-semibold text-sidebar-accent-foreground">Plan Crece</p>
+            <p className="mt-0.5 text-[11px] text-sidebar-foreground/70">
+              1,840 / 3,000 conversaciones
+            </p>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-sidebar-border">
+              <div className="h-full w-[61%] rounded-full bg-sidebar-primary" />
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="p-3 text-center" title="Plan Crece: 61% usado">
+            <div className="mx-auto h-2 w-2 rounded-full bg-sidebar-primary animate-pulse" />
+          </div>
+        )}
       </aside>
 
+      {/* ÁREA DE CONTENIDO */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur lg:px-6">
-          <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted">
+          <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted cursor-pointer">
             <Store className="h-4 w-4 text-primary" strokeWidth={1.75} />
             Tienda Andina
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -148,7 +216,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => changeTheme("normal")}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition cursor-pointer ${
                   currentTheme === "normal"
                     ? "bg-surface text-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -161,7 +229,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => changeTheme("dim")}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition cursor-pointer ${
                   currentTheme === "dim"
                     ? "bg-surface text-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -174,7 +242,7 @@ export function AppShell({
               <button
                 type="button"
                 onClick={() => changeTheme("dark")}
-                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition cursor-pointer ${
                   currentTheme === "dark"
                     ? "bg-surface text-foreground shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground"
@@ -186,7 +254,7 @@ export function AppShell({
               </button>
             </div>
 
-            <button className="relative rounded-lg p-2 hover:bg-muted" title="Notificaciones">
+            <button className="relative rounded-lg p-2 hover:bg-muted cursor-pointer" title="Notificaciones">
               <Bell className="h-[18px] w-[18px] text-muted-foreground" strokeWidth={1.75} />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-status-noconfirma" />
             </button>

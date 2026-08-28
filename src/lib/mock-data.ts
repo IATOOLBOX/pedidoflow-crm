@@ -1296,8 +1296,22 @@ export const activity = [
   { id: "a6", text: "Rosa Huamán envió su DNI para la agencia", time: "hace 3 h", tone: "wa_entrante" as OrderStatus },
 ];
 
-export type UserRole = "Administrador" | "Ventas" | "Logística";
+export type UserRole = "Administrador" | "Ventas" | "Logística" | "Soporte / Asesor";
 export type UserStatus = "Activo" | "Inactivo";
+export type AccessType = "Indefinido" | "Temporal";
+
+export type CRMModule =
+  | "dashboard"
+  | "pedidos"
+  | "confirmados"
+  | "conversaciones"
+  | "pagos"
+  | "clientes"
+  | "workflows"
+  | "plantillas"
+  | "integraciones"
+  | "configuracion"
+  | "equipo";
 
 export type User = {
   id: string;
@@ -1308,6 +1322,11 @@ export type User = {
   lastActive: string;
   avatar: string;
   permissions: string[];
+  functions?: string | undefined;
+  accessModules?: CRMModule[] | undefined;
+  accessType?: AccessType | undefined;
+  temporaryDuration?: string | undefined;
+  expiresAt?: string | undefined;
 };
 
 export const users: User[] = [
@@ -1320,6 +1339,9 @@ export const users: User[] = [
     lastActive: "En línea",
     avatar: "AV",
     permissions: ["all"],
+    functions: "Supervisión general, configuración de bots e integraciones de pago",
+    accessModules: ["dashboard", "pedidos", "confirmados", "conversaciones", "pagos", "clientes", "workflows", "plantillas", "integraciones", "configuracion", "equipo"],
+    accessType: "Indefinido",
   },
   {
     id: "usr2",
@@ -1330,6 +1352,9 @@ export const users: User[] = [
     lastActive: "Hace 15 min",
     avatar: "LC",
     permissions: ["view_orders", "edit_orders", "send_messages", "approve_payments"],
+    functions: "Confirmar pedidos COD por WhatsApp y validar vouchers Yape/Plin",
+    accessModules: ["dashboard", "pedidos", "confirmados", "conversaciones", "pagos", "clientes"],
+    accessType: "Indefinido",
   },
   {
     id: "usr3",
@@ -1340,6 +1365,11 @@ export const users: User[] = [
     lastActive: "Hace 2 horas",
     avatar: "CR",
     permissions: ["view_orders", "update_delivery_status", "generate_labels"],
+    functions: "Despacho de pedidos, emisión de guías Shalom y coordinación con olva/motorizados",
+    accessModules: ["pedidos", "confirmados"],
+    accessType: "Temporal",
+    temporaryDuration: "30 días",
+    expiresAt: "27 de Septiembre, 2026",
   },
   {
     id: "usr4",
@@ -1350,5 +1380,10 @@ export const users: User[] = [
     lastActive: "Hace 3 días",
     avatar: "DS",
     permissions: ["view_orders", "edit_orders", "send_messages"],
+    functions: "Apoyo temporal en campañas de Rompe-Vistos de fin de semana",
+    accessModules: ["conversaciones", "plantillas"],
+    accessType: "Temporal",
+    temporaryDuration: "7 días (Expirado)",
+    expiresAt: "25 de Agosto, 2026",
   },
 ];

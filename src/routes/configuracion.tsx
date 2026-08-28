@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { MapPin, Plus, Trash2, Workflow, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { EquipoSection } from "@/components/equipo-section";
 
 export const Route = createFileRoute("/configuracion")({
   head: () => ({
@@ -27,7 +28,7 @@ const tabs = [
   "Reglas de contraentrega",
   "Seguimiento",
   "Adelanto",
-  "Equipo",
+  "Equipo y roles",
   "Plan y facturación",
 ] as const;
 
@@ -225,34 +226,15 @@ function ConfiguracionPage() {
             </div>
           ) : null}
 
-          {tab === "Equipo" ? (
+          {tab === "Equipo y roles" ? (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold">Equipo</h2>
-                <button className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90">
-                  <Plus className="h-4 w-4" /> Invitar usuario
-                </button>
+              <div className="border-b border-border pb-3">
+                <h2 className="text-base font-extrabold text-foreground">Gestión de Equipo, Roles y Accesos</h2>
+                <p className="text-xs text-muted-foreground">
+                  Administra quiénes tienen acceso al CRM, define las funciones de tu personal y limita los módulos del sistema por usuario.
+                </p>
               </div>
-              <ul className="divide-y divide-border rounded-xl border border-border">
-                {[
-                  ["Andrea Vega", "andrea@tiendaandina.pe", "Administradora"],
-                  ["Luis Quiroz", "luis@tiendaandina.pe", "Agente de ventas"],
-                  ["Karina Soto", "karina@tiendaandina.pe", "Verificación de pagos"],
-                ].map(([n, e, r]) => (
-                  <li key={e} className="flex items-center gap-3 px-4 py-3">
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">
-                      {n!.split(" ").map((w) => w[0]).join("")}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium">{n}</p>
-                      <p className="text-xs text-muted-foreground">{e}</p>
-                    </div>
-                    <span className="ml-auto rounded-full bg-muted px-2.5 py-1 text-[11px] font-semibold">
-                      {r}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+              <EquipoSection />
             </div>
           ) : null}
 
