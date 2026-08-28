@@ -20,6 +20,7 @@ Objetivo: Terminar de maquetar en Antigravity los módulos pendientes para tener
   - Módulo de Upsells interactivo: botón "CREAR UPSELL" primero, triggers post-confirmación o post-entrega, oferta de catálogo completo (PDF) o productos específicos, copy con variables dinámicas, adjuntos (imagen, video, voz, PDF) y switches individuales de Prendido/Apagado.
   - Botón interactivo de Prendido y Apagado en cada flujo guardado de Rompe-Vistos (conmutación en caliente).
   - Selector global de 3 Temas en `AppShell` (☀️ Normal, 🌓 Medio Oscuro / Dim, 🌙 Oscuro / Deep Dark) con persistencia en localStorage.
+  - Suite de Notificaciones Automáticas del Equipo: Switch principal "Notificar Recordatorios" (Activar/Desactivar), Centro de Detección de Respuestas Críticas de Clientes (IA Support Dispatch para "Pagaré a las 6 pm", "Ya no deseo", "Qué pasó con mi pedido no me avisan", vouchers Yape y peticiones de asesor), Feed en vivo de alertas enviadas al soporte que se actualiza en tiempo real con botón de simulación, Stepper de 4 pasos (Remitente, Destinatarios, Abrir chat 24h con enlace directo de 1 clic, Guardar y Probar individualmente en WhatsApp).
 
 ### 📝 Pendiente por construir visualmente:
 - `[ ]` **Ampliación de Plantillas**: Pantalla enriquecida por categorías (Confirmación, Rompevistas, Logística, etc.) con variables dinámicas.

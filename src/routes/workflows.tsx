@@ -44,6 +44,18 @@ import {
   Copy,
   Power,
   FileCode,
+  AlertTriangle,
+  Users,
+  UserCheck,
+  RefreshCw,
+  Volume2,
+  VolumeX,
+  Radio,
+  ExternalLink,
+  MessageCircle,
+  Flame,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { templates as mockTemplates, type Template } from "@/lib/mock-data";
@@ -229,7 +241,7 @@ const cardsData = [
   {
     id: "notificaciones" as WorkflowTab,
     title: "Notificaciones Automáticas",
-    desc: "Alertas y avisos internos para el equipo por WhatsApp y Telegram",
+    desc: "Alertas internas al equipo por WhatsApp y Telegram ante respuestas críticas",
     icon: Bell,
     badge: "Equipo",
   },
@@ -334,6 +346,101 @@ interface FlowMessageConfig {
   newTemplateText: string;
   selectedTemplateId: string;
   updatedAt?: string;
+}
+
+// =============================================================================
+// ESTRUCTURAS PARA EL MÓDULO DE NOTIFICACIONES AUTOMÁTICAS AL EQUIPO
+// =============================================================================
+
+export interface NotificationEventDef {
+  id: string;
+  label: string;
+  desc: string;
+  category: "Ventas" | "Logística" | "Finanzas" | "Atención";
+  exampleMsg: string;
+}
+
+export const NOTIFICATION_EVENT_OPTIONS: NotificationEventDef[] = [
+  {
+    id: "compromiso_hora",
+    label: "⏰ Compromiso de pago con hora exacta",
+    desc: "Cliente dice 'Pagaré a las 6 pm', 'Te yapeo en la tarde'. Alerta al asesor y agenda alarma a esa hora.",
+    category: "Ventas",
+    exampleMsg: "“Pagaré a las 6 pm cuando llegue del trabajo”",
+  },
+  {
+    id: "rechazo_cancelacion",
+    label: "🛑 Intención de cancelación o duda",
+    desc: "Cliente dice 'Ya no deseo', 'Mejor cancélenlo', 'Ya compré en otro lado'. Alerta urgente para retención.",
+    category: "Ventas",
+    exampleMsg: "“Ya no deseo el producto, cancelen mi pedido gracias”",
+  },
+  {
+    id: "ansiedad_logistica",
+    label: "🚨 Reclamos y dudas de envío (¿Qué pasó con mi pedido?)",
+    desc: "Cliente dice '¿Qué pasó con mi pedido no me avisan?'. Alerta de alta prioridad a logística.",
+    category: "Logística",
+    exampleMsg: "“¿Qué paso con mi pedido no me avisan nada? Ya pasaron 2 días”",
+  },
+  {
+    id: "pago_voucher",
+    label: "💸 Comprobante Yape / Plin enviado",
+    desc: "Cliente adjuntó comprobante o captura de transferencia bancaria para verificación de caja.",
+    category: "Finanzas",
+    exampleMsg: "“Listo, ya les yapeé los S/ 89.00 aquí les mando la captura”",
+  },
+  {
+    id: "pide_humano",
+    label: "🧑‍💼 Solicitud de asesor humano",
+    desc: "Cliente solicita hablar con una persona en lugar de continuar con el bot automatizado.",
+    category: "Atención",
+    exampleMsg: "“Quiero hablar con una persona de atención al cliente”",
+  },
+  {
+    id: "nuevo_pedido",
+    label: "🛍️ Nuevo pedido entrante Shopify",
+    desc: "Aviso instantáneo al registrarse una nueva orden en tu tienda web contraentrega.",
+    category: "Ventas",
+    exampleMsg: "Nuevo pedido #PF-9102 registrado por S/ 149.00 en Shopify",
+  },
+  {
+    id: "pedido_confirmado",
+    label: "📦 Pedido confirmado listo para empaque",
+    desc: "El cliente confirmó la compra contraentrega o con adelanto Shalom.",
+    category: "Logística",
+    exampleMsg: "Pedido #PF-8840 confirmado para entrega mañana en Los Olivos",
+  },
+  {
+    id: "incidencia_shalom",
+    label: "🚚 Incidencia o retraso en agencia Shalom",
+    desc: "El paquete lleva más de 48h sin retirar en ventanilla o hay problema con el DNI.",
+    category: "Logística",
+    exampleMsg: "Guía Shalom #SH-7721 pendiente de recojo hace 48h en agencia Chiclayo",
+  },
+];
+
+export interface TeamRecipient {
+  id: string;
+  name: string;
+  role: string;
+  channel: "whatsapp" | "telegram" | "ambos";
+  phone: string;
+  telegramUser?: string;
+  activeEvents: string[];
+  is24hActive: boolean;
+  hoursRemaining: number;
+  active: boolean;
+}
+
+export interface LiveSupportAlert {
+  id: string;
+  timeAgo: string;
+  customerName: string;
+  city: string;
+  rawText: string;
+  detectedType: "compromiso_hora" | "rechazo_cancelacion" | "ansiedad_logistica" | "pago_voucher" | "pide_humano";
+  notifiedTo: string;
+  actionTaken: string;
 }
 
 export function WorkflowsPage() {
@@ -506,7 +613,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setIsCreatingUpsell(false);
   };
 
-  // Prender o Apagar Upsell individual
   const handleToggleUpsellActive = (upsellId: string) => {
     setUpsells((prev) =>
       prev.map((u) => (u.id === upsellId ? { ...u, active: !u.active } : u))
@@ -514,7 +620,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     showToast("Estado del Upsell actualizado");
   };
 
-  // Cargar Upsell para edición
   const handleEditUpsell = (item: UpsellItem) => {
     setEditingUpsellId(item.id);
     setUpTrigger(item.trigger);
@@ -526,7 +631,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setIsCreatingUpsell(true);
   };
 
-  // Eliminar Upsell
   const handleDeleteUpsell = (upsellId: string) => {
     setUpsells((prev) => prev.filter((u) => u.id !== upsellId));
     showToast("Upsell eliminado");
@@ -538,6 +642,247 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
       prev.map((f) => (f.id === flowId ? { ...f, active: !f.active } : f))
     );
     showToast("Estado del flujo de rompevistos actualizado");
+  };
+
+  // ===========================================================================
+  // ESTADOS NOTIFICACIONES AUTOMÁTICAS (NUEVO MÓDULO INTELIGENTE)
+  // ===========================================================================
+
+  // 1. OPCIÓN NOTIFICAR RECORDATORIOS (ACTIVAR O DESACTIVAR)
+  const [notifyRemindersActive, setNotifyRemindersActive] = useState<boolean>(true);
+
+  // 2. NÚMERO REMITENTE
+  const [notifySenderNumber, setNotifySenderNumber] = useState<string>(
+    "Maria Clau Alelo - +51 951 874 485"
+  );
+
+  // 3. DESTINATARIOS DEL EQUIPO
+  const [teamRecipients, setTeamRecipients] = useState<TeamRecipient[]>([
+    {
+      id: "rec-1",
+      name: "Luis Mendívil",
+      role: "Ventas / Confirmador",
+      channel: "whatsapp",
+      phone: "+51916570241",
+      activeEvents: [
+        "compromiso_hora",
+        "rechazo_cancelacion",
+        "pago_voucher",
+        "pide_humano",
+        "nuevo_pedido",
+        "pedido_confirmado",
+      ],
+      is24hActive: true,
+      hoursRemaining: 21,
+      active: true,
+    },
+    {
+      id: "rec-2",
+      name: "Karina Flores",
+      role: "Logística / Despacho Shalom",
+      channel: "whatsapp",
+      phone: "+51928789236",
+      activeEvents: ["ansiedad_logistica", "incidencia_shalom", "pedido_confirmado"],
+      is24hActive: true,
+      hoursRemaining: 18,
+      active: true,
+    },
+    {
+      id: "rec-3",
+      name: "Andrea Vega",
+      role: "Administradora General",
+      channel: "ambos",
+      phone: "+51951874485",
+      telegramUser: "@andreavega_crm",
+      activeEvents: [
+        "compromiso_hora",
+        "rechazo_cancelacion",
+        "ansiedad_logistica",
+        "pago_voucher",
+        "pide_humano",
+        "nuevo_pedido",
+        "pedido_confirmado",
+        "incidencia_shalom",
+      ],
+      is24hActive: true,
+      hoursRemaining: 24,
+      active: true,
+    },
+  ]);
+
+  // Modal para seleccionar eventos de un destinatario específico
+  const [configuringRecipientId, setConfiguringRecipientId] = useState<string | null>(null);
+
+  // Formulario rápido para agregar nuevo destinatario
+  const [isAddingRecipient, setIsAddingRecipient] = useState<boolean>(false);
+  const [newRecName, setNewRecName] = useState("");
+  const [newRecPhone, setNewRecPhone] = useState("+519");
+  const [newRecRole, setNewRecRole] = useState("Ventas");
+  const [newRecChannel, setNewRecChannel] = useState<"whatsapp" | "telegram" | "ambos">("whatsapp");
+
+  // 4. REGISTRO EN VIVO DE ALERTAS NOTIFICADAS AL SOPORTE (SE VA ACTUALIZANDO)
+  const [liveAlertFeed, setLiveAlertFeed] = useState<LiveSupportAlert[]>([
+    {
+      id: "alert-1",
+      timeAgo: "Hace 1 min",
+      customerName: "Juan Pérez (Trujillo)",
+      city: "Trujillo",
+      rawText: "“Pagaré a las 6 pm cuando llegue de trabajar”",
+      detectedType: "compromiso_hora",
+      notifiedTo: "Luis Mendívil (+51 916 570 241)",
+      actionTaken: "Alarma agendada hoy a las 6:00 PM con recordatorio automático al asesor",
+    },
+    {
+      id: "alert-2",
+      timeAgo: "Hace 7 min",
+      customerName: "Rosa Huamán (Arequipa)",
+      city: "Arequipa",
+      rawText: "“¿Qué paso con mi pedido no me avisan nada? Ya van 2 días”",
+      detectedType: "ansiedad_logistica",
+      notifiedTo: "Karina Flores (Logística)",
+      actionTaken: "Guía Shalom #SH-8821 enviada inmediatamente al chat para calmar al cliente",
+    },
+    {
+      id: "alert-3",
+      timeAgo: "Hace 18 min",
+      customerName: "Carlos Dávila (Lima Norte)",
+      city: "Lima Norte",
+      rawText: "“Ya no deseo el producto, cancélenlo por favor”",
+      detectedType: "rechazo_cancelacion",
+      notifiedTo: "Andrea Vega (Retención)",
+      actionTaken: "Alerta de retención prioritaria enviada con propuesta de cupón 15% OFF",
+    },
+    {
+      id: "alert-4",
+      timeAgo: "Hace 32 min",
+      customerName: "Maritza Quispe (Cusco)",
+      city: "Cusco",
+      rawText: "“Adjunto mi voucher de Yape de S/ 89.00 por el pack de zapatillas”",
+      detectedType: "pago_voucher",
+      notifiedTo: "Andrea Vega (Administración)",
+      actionTaken: "Comprobante verificado y pedido pasado a Confirmado",
+    },
+  ]);
+
+  // Simular nuevo evento de cliente en vivo
+  const handleSimulateNewCustomerEvent = () => {
+    const sampleEvents: {
+      customerName: string;
+      city: string;
+      rawText: string;
+      detectedType: "compromiso_hora" | "rechazo_cancelacion" | "ansiedad_logistica" | "pago_voucher" | "pide_humano";
+      notifiedTo: string;
+      actionTaken: string;
+    }[] = [
+      {
+        customerName: "Dora Benavides (Piura)",
+        city: "Piura",
+        rawText: "“Pagaré a las 4 pm apenas salga del banco”",
+        detectedType: "compromiso_hora",
+        notifiedTo: "Luis Mendívil (+51 916 570 241)",
+        actionTaken: "Alarma agendada para las 16:00 hrs con recordatorio automático",
+      },
+      {
+        customerName: "Jorge Castillo (Chiclayo)",
+        city: "Chiclayo",
+        rawText: "“¿Qué pasó con mi pedido no me avisan? Lo pedí el lunes”",
+        detectedType: "ansiedad_logistica",
+        notifiedTo: "Karina Flores (Logística)",
+        actionTaken: "Alerta de seguimiento enviada a despacho Shalom",
+      },
+      {
+        customerName: "Milagros Paredes (Callao)",
+        city: "Callao",
+        rawText: "“Ya no deseo el pedido, me surgió una emergencia familiar”",
+        detectedType: "rechazo_cancelacion",
+        notifiedTo: "Andrea Vega (Retención)",
+        actionTaken: "Alerta urgente para re-negociar fecha de entrega",
+      },
+      {
+        customerName: "Walter Morales (Huancayo)",
+        city: "Huancayo",
+        rawText: "“Quiero hablar con un asesor humano por favor”",
+        detectedType: "pide_humano",
+        notifiedTo: "Luis Mendívil (+51 916 570 241)",
+        actionTaken: "Chat pausado temporalmente del bot y asignado a asesor",
+      },
+    ];
+
+    const randomEvt = sampleEvents[Math.floor(Math.random() * sampleEvents.length)] || sampleEvents[0]!;
+    const newAlertItem: LiveSupportAlert = {
+      id: `alert-${Date.now()}`,
+      timeAgo: "Hace unos segundos",
+      customerName: randomEvt.customerName,
+      city: randomEvt.city,
+      rawText: randomEvt.rawText,
+      detectedType: randomEvt.detectedType,
+      notifiedTo: randomEvt.notifiedTo,
+      actionTaken: randomEvt.actionTaken,
+    };
+
+    setLiveAlertFeed((prev) => [newAlertItem, ...prev.slice(0, 9)]);
+    showToast(`🔔 ¡Nueva alerta de cliente detectada y notificada al soporte!`);
+  };
+
+  // Guardar nuevo destinatario
+  const handleAddRecipient = () => {
+    if (!newRecPhone || newRecPhone.length < 9) {
+      showToast("Ingresa un número telefónico válido");
+      return;
+    }
+    const newRec: TeamRecipient = {
+      id: `rec-${Date.now()}`,
+      name: newRecName || "Nuevo Asesor",
+      role: newRecRole,
+      channel: newRecChannel,
+      phone: newRecPhone,
+      activeEvents: [
+        "compromiso_hora",
+        "rechazo_cancelacion",
+        "ansiedad_logistica",
+        "pago_voucher",
+        "pide_humano",
+      ],
+      is24hActive: true,
+      hoursRemaining: 24,
+      active: true,
+    };
+    setTeamRecipients((prev) => [...prev, newRec]);
+    setIsAddingRecipient(false);
+    setNewRecName("");
+    setNewRecPhone("+519");
+    showToast("¡Destinatario añadido con éxito!");
+  };
+
+  // Toggle de evento individual en un destinatario
+  const handleToggleRecipientEvent = (recipientId: string, eventId: string) => {
+    setTeamRecipients((prev) =>
+      prev.map((r) => {
+        if (r.id !== recipientId) return r;
+        const exists = r.activeEvents.includes(eventId);
+        const updated = exists
+          ? r.activeEvents.filter((e) => e !== eventId)
+          : [...r.activeEvents, eventId];
+        return { ...r, activeEvents: updated };
+      })
+    );
+  };
+
+  // Enviar mensaje de prueba al asesor
+  const handleSendTestNotification = (recipient?: TeamRecipient) => {
+    const targetName = recipient ? recipient.name : "todo el equipo";
+    const testCopy = recipient
+      ? `🚨 [ALERTA DE PRUEBA PEDIDOFLOW]
+Hola ${recipient.name} 👋
+Esta es una alerta de prueba en tu ${recipient.channel.toUpperCase()}.
+Tu conexión está 100% activa para recibir notificaciones automáticas de clientes (compromisos de pago con hora, reclamos y pedidos).
+Tiempo de respuesta óptimo: < 5 minutos.`
+      : `🚨 [ALERTA GENERAL DE PRUEBA PEDIDOFLOW]
+Equipo activo: ${teamRecipients.length} miembros conectados.
+Sistema de detección de respuestas y recordatorios funcionando normalmente.`;
+
+    openSim(testCopy);
+    showToast(`¡Mensaje de prueba enviado exitosamente a ${targetName}!`);
   };
 
   // Notificación tipo toast
@@ -553,9 +898,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     "¡Hola! 👋 Qué bueno que nos escribes desde nuestro anuncio. Te comparto las promociones exclusivas en medias de bambú disponibles hoy con envío contraentrega:"
   );
 
-  // Estado Notificaciones
-  const [testSent, setTestSent] = useState(false);
-
   const openSim = (msg: string) => {
     setSimulatorMessage(msg);
     setSimulatorOpen(true);
@@ -570,7 +912,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setter(currentText ? `${currentText} ${formatted}` : formatted);
   };
 
-  // Manejador de cambio de número de tiempo con límite estricto de cifras
   const handleStepWaitValueChange = (
     stepId: string,
     rawStr: string,
@@ -584,7 +925,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     );
   };
 
-  // Manejador de cambio de unidad de tiempo
   const handleStepWaitUnitChange = (
     stepId: string,
     newUnit: "segundos" | "minutos" | "horas"
@@ -600,7 +940,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     );
   };
 
-  // Toggle de multimedia adjunta en Rompe-Vistos
   const handleToggleAttachment = (
     stepId: string,
     type: "imagen" | "video" | "audio"
@@ -622,7 +961,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     );
   };
 
-  // Toggle de multimedia adjunta en Upsells
   const handleToggleUpsellAttachment = (type: "imagen" | "video" | "audio" | "pdf") => {
     const sampleFiles = {
       imagen: "foto_combo_upsell.jpg",
@@ -638,7 +976,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     }
   };
 
-  // Agregar otro flujo / paso de recordatorio
   const handleAddAnotherStep = () => {
     const nextNum = currentRvSteps.length + 1;
     const newStep: RompeVistoStepItem = {
@@ -653,13 +990,11 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setCurrentRvSteps((prev) => [...prev, newStep]);
   };
 
-  // Eliminar un paso de recordatorio
   const handleRemoveStep = (stepId: string) => {
     if (currentRvSteps.length <= 1) return;
     setCurrentRvSteps((prev) => prev.filter((s) => s.id !== stepId));
   };
 
-  // Editar flujo existente
   const handleEditFlow = (flow: SavedRompeVistoFlow) => {
     setEditingFlowId(flow.id);
     setRvProduct(flow.product);
@@ -674,7 +1009,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setOpenOrigen(true);
   };
 
-  // Guardar y Activar Flujo (Nuevo o Actualizado)
   const handleSaveAndActivate = () => {
     const sortedSteps = [...currentRvSteps].sort(
       (a, b) => getStepSeconds(a) - getStepSeconds(b)
@@ -748,7 +1082,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     }, 1200);
   };
 
-  // Etapas disponibles dinámicamente según el canal seleccionado
   const availableStages = useMemo(() => {
     if (filterChannel === "whatsapp") return channelStages.whatsapp;
     if (filterChannel === "shopify") return channelStages.shopify;
@@ -765,7 +1098,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     return all;
   }, [filterChannel]);
 
-  // Filtrado de flujos por Canal, Tipo de Entrega y Etapa
   const filteredFlows = useMemo(() => {
     return savedRompeVistos.filter((flow) => {
       const matchChannel = filterChannel === "todos" || flow.sourceChannel === filterChannel;
@@ -775,7 +1107,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     });
   }, [savedRompeVistos, filterChannel, filterShipping, filterStage]);
 
-  // Agrupación de flujos filtrados por Producto
   const flowsByProduct = useMemo(() => {
     return filteredFlows.reduce<Record<string, SavedRompeVistoFlow[]>>((acc, flow) => {
       const list = acc[flow.product] ?? [];
@@ -785,7 +1116,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     }, {});
   }, [filteredFlows]);
 
-  // ORDENAR PRODUCTOS: El producto que se editó / creó al último SIEMPRE primero
   const sortedProductEntries = useMemo(() => {
     const productTimestamp: Record<string, number> = {};
     savedRompeVistos.forEach((f) => {
@@ -803,7 +1133,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setExpandedProducts((prev) => ({ ...prev, [prod]: !prev[prod] }));
   };
 
-  // Conteos de los botones de filtro
   const countWhatsApp = savedRompeVistos.filter((f) => f.sourceChannel === "whatsapp").length;
   const countShopify = savedRompeVistos.filter((f) => f.sourceChannel === "shopify").length;
   const countLogistica = savedRompeVistos.filter((f) => f.sourceChannel === "logistica").length;
@@ -1159,7 +1488,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                               key={prodName}
                               className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs transition hover:border-emerald-500/40"
                             >
-                              {/* Cabecera del Producto (Tarjeta compacta) */}
                               <div
                                 onClick={() => toggleProductExpand(prodName)}
                                 className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-muted/30 transition select-none"
@@ -1196,10 +1524,8 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                 </div>
                               </div>
 
-                              {/* Despliegue ordenado de los flujos de este producto */}
                               {isExpanded && (
                                 <div className="p-4 sm:p-5 pt-0 border-t border-border/50 bg-surface/50 space-y-4 animate-in fade-in duration-200">
-                                  {/* SECCIÓN 1: CONTRAENTREGA LOCAL */}
                                   {codFlows.length > 0 && (
                                     <div className="space-y-2 pt-3">
                                       <div className="flex items-center gap-2">
@@ -1229,7 +1555,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                                   {flow.steps.length} {flow.steps.length === 1 ? "mensaje" : "mensajes"}
                                                 </span>
 
-                                                {/* BOTÓN PRENDIDO / APAGADO EN ROMPE-VISTOS */}
                                                 <button
                                                   type="button"
                                                   onClick={(e) => {
@@ -1282,7 +1607,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                               </div>
                                             </div>
 
-                                            {/* Mensajes ordenados cronológicamente */}
                                             <div className="space-y-2">
                                               {[...flow.steps]
                                                 .sort((a, b) => getStepSeconds(a) - getStepSeconds(b))
@@ -1317,7 +1641,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                     </div>
                                   )}
 
-                                  {/* SECCIÓN 2: ENVÍO POR AGENCIA SHALOM (PROVINCIAS) */}
                                   {shalomFlows.length > 0 && (
                                     <div className="space-y-2 pt-2">
                                       <div className="flex items-center gap-2">
@@ -1347,7 +1670,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                                   {flow.steps.length} {flow.steps.length === 1 ? "mensaje" : "mensajes"}
                                                 </span>
 
-                                                {/* BOTÓN PRENDIDO / APAGADO */}
                                                 <button
                                                   type="button"
                                                   onClick={(e) => {
@@ -1400,7 +1722,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                               </div>
                                             </div>
 
-                                            {/* Mensajes ordenados cronológicamente */}
                                             <div className="space-y-2">
                                               {[...flow.steps]
                                                 .sort((a, b) => getStepSeconds(a) - getStepSeconds(b))
@@ -1456,9 +1777,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                     )}
                   </div>
                 ) : (
-                  /* MODO CREADOR / EDITOR DE FLUJO DE ROMPE-VISTOS */
                   <div className="space-y-4 animate-in fade-in">
-                    {/* BANNER SI ESTÁ EN MODO EDICIÓN */}
                     {editingFlowId && (
                       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in">
                         <div className="flex items-center gap-2.5">
@@ -1513,7 +1832,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     )}
 
-                    {/* PASO 1: SELECCIONAR PRODUCTO */}
+                    {/* PASO 1 */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso1(!openPaso1)}
@@ -1644,7 +1963,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* PASO 2: SELECCIONAR CONTRAENTREGA O AGENCIA */}
+                    {/* PASO 2 */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso2(!openPaso2)}
@@ -1722,7 +2041,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* PASO 3: MÉTODO DE CREACIÓN */}
+                    {/* PASO 3 */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso3(!openPaso3)}
@@ -1796,7 +2115,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* LOADER IA */}
                     {rvGeneratingIa && (
                       <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-2 animate-in fade-in">
                         <Wand2 className="h-6 w-6 text-emerald-500 animate-spin mx-auto" />
@@ -1806,7 +2124,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     )}
 
-                    {/* MENSAJES MANUAL/IA */}
                     {(rvCreationMode === "manual" || (rvCreationMode === "ia" && !rvGeneratingIa)) && (
                       <div className="space-y-4 animate-in fade-in">
                         {/* ORIGEN DE CAPTACIÓN */}
@@ -2223,7 +2540,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
 
                 {confLogSubTab === "confirmaciones" && (
                   <div className="space-y-6">
-                    {/* MENSAJE 1.1 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2424,7 +2740,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* MENSAJE 1.2 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2625,7 +2940,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
 
                 {confLogSubTab === "logistica" && (
                   <div className="space-y-6">
-                    {/* MENSAJE 2.1 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2818,7 +3132,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* MENSAJE 2.2 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -3016,11 +3329,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
             )}
 
             {/* ========================================================================= */}
-            {/* 4. UPSELLS (VENTA CRUZADA) - CON BOTÓN CREAR UPSELL PRIMERO               */}
+            {/* 4. UPSELLS (VENTA CRUZADA)                                                */}
             {/* ========================================================================= */}
             {selectedTab === "upsells" && (
               <div className="space-y-6 animate-in fade-in">
-                {/* CABECERA CON BOTÓN "CREAR UPSELL" PRIMERO Y DESTACADO */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div>
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -3033,7 +3345,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   </div>
 
                   <div className="flex items-center gap-2 self-start sm:self-auto">
-                    {/* BOTÓN CREAR UPSELL DESTACADO */}
                     <button
                       type="button"
                       onClick={() => {
@@ -3057,7 +3368,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   </div>
                 </div>
 
-                {/* FORMULARIO CREADOR / EDITOR DE UPSELL */}
                 {isCreatingUpsell ? (
                   <div className="rounded-2xl border-2 border-emerald-500/40 bg-surface p-5 sm:p-6 space-y-5 shadow-md animate-in fade-in">
                     <div className="flex items-center justify-between border-b border-border pb-3">
@@ -3174,7 +3484,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </button>
                       </div>
 
-                      {/* Selector si es producto específico */}
                       {upOfferType === "productos_especificos" && (
                         <div className="pt-2">
                           <label className="block text-[11px] font-bold text-muted-foreground mb-1">
@@ -3208,7 +3517,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary leading-relaxed"
                       />
 
-                      {/* Chips de variables */}
                       <div className="flex flex-wrap items-center gap-1.5 pt-1">
                         <span className="text-[11px] font-semibold text-muted-foreground mr-1">
                           Variables:
@@ -3228,7 +3536,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     </div>
 
-                    {/* 4. ABAJO AGREGAR IMAGEN, VIDEO O VOZ */}
+                    {/* 4. ADJUNTAR MULTIMEDIA */}
                     <div className="space-y-2 pt-2 border-t border-border">
                       <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                         4. Adjuntar Contenido Multimedia:
@@ -3299,7 +3607,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* 5. BOTÓN DE APAGADO Y PRENDIDO (SWITCH INTERACTIVO) */}
+                    {/* 5. SWITCH PRENDIDO / APAGADO */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border">
                       <div className="space-y-0.5">
                         <label className="text-xs font-bold text-foreground block">
@@ -3324,7 +3632,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </button>
                     </div>
 
-                    {/* ACCIONES DEL FORMULARIO */}
                     <div className="pt-4 border-t border-border flex flex-wrap items-center justify-end gap-2.5">
                       <button
                         type="button"
@@ -3394,7 +3701,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                 </span>
                               </div>
 
-                              {/* BOTÓN PRENDIDO / APAGADO EN LA TARJETA */}
                               <button
                                 type="button"
                                 onClick={() => handleToggleUpsellActive(up.id)}
@@ -3460,37 +3766,681 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
             )}
 
             {/* ========================================================================= */}
-            {/* 5. NOTIFICACIONES                                                        */}
+            {/* 5. NOTIFICACIONES AUTOMÁTICAS (MEJORADO AL MÁXIMO SEGÚN EJEMPLO)          */}
             {/* ========================================================================= */}
             {selectedTab === "notificaciones" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-border pb-4">
-                  <div>
-                    <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                      <Bell className="h-5 w-5 text-emerald-500" />
-                      Notificaciones Automáticas
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Alertas y avisos internos para el equipo por WhatsApp y Telegram.
+              <div className="space-y-8 animate-in fade-in duration-200">
+                {/* CABECERA CON EL SWITCH PRINCIPAL "NOTIFICAR RECORDATORIOS" */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold">
+                        <Bell className="h-5 w-5" />
+                      </div>
+                      <h2 className="text-xl font-extrabold text-foreground">
+                        Notificaciones Automáticas del Equipo
+                      </h2>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Recibe alertas importantes por WhatsApp y/o Telegram ante eventos y respuestas de clientes.
                     </p>
                   </div>
-                  <button
-                    onClick={() => {
-                      setTestSent(true);
-                      setTimeout(() => setTestSent(false), 2500);
-                    }}
-                    className="rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-500 transition"
-                  >
-                    {testSent ? "¡Enviado!" : "Enviar Alerta de Prueba"}
-                  </button>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* BOTÓN: NOTIFICAR RECORDATORIOS (ACTIVAR O DESACTIVAR) */}
+                    <div className="flex items-center gap-2 rounded-2xl border border-border bg-surface-2 p-1.5 shadow-xs">
+                      <div className="px-2">
+                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-emerald-500" />
+                          Notificar Recordatorios:
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = !notifyRemindersActive;
+                          setNotifyRemindersActive(next);
+                          showToast(
+                            next
+                              ? "🟢 Sistema de recordatorios y alertas internas ACTIVADO"
+                              : "⚪ Sistema de recordatorios y alertas internas PAUSADO"
+                          );
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-1.5 text-xs font-bold transition shadow-xs ${
+                          notifyRemindersActive
+                            ? "bg-emerald-600 text-white shadow-emerald-500/20 ring-2 ring-emerald-500/30"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            notifyRemindersActive ? "bg-white animate-pulse" : "bg-muted-foreground/40"
+                          }`}
+                        />
+                        <span>{notifyRemindersActive ? "ACTIVADO" : "DESACTIVADO"}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTutorial("notificaciones")}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
+                    >
+                      <Play className="h-3 w-3 fill-current" />
+                      Ver Tutorial
+                    </button>
+                  </div>
                 </div>
 
-                <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-2 text-xs">
-                  <p className="font-bold text-foreground">Canal de Alertas del Equipo:</p>
-                  <p className="text-muted-foreground">WhatsApp Business API Oficial (+51 987 654 321) · 3 miembros conectados</p>
+                {/* STEPPER VISUAL DE 4 PASOS (COMO EN LA IMAGEN DEL OTRO CRM) */}
+                <div className="rounded-2xl border border-border bg-surface-2 p-4 sm:p-6 shadow-xs space-y-3">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 relative">
+                    {[
+                      { num: 1, title: "Remitente", desc: "WhatsApp oficial" },
+                      { num: 2, title: "Destinatarios", desc: "Ventas y Logística" },
+                      { num: 3, title: "Abrir chat", desc: "Ventana de 24 horas" },
+                      { num: 4, title: "Guardar", desc: "Probar configuración" },
+                    ].map((step) => (
+                      <div
+                        key={step.num}
+                        className="flex items-center gap-3 p-2 rounded-xl bg-surface/70 border border-border/70"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white text-xs font-black shrink-0 shadow-xs">
+                          {step.num}
+                        </div>
+                        <div className="leading-tight">
+                          <p className="text-xs font-bold text-foreground">{step.title}</p>
+                          <p className="text-[10px] text-muted-foreground">{step.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-center text-muted-foreground pt-1">
+                    Sigue estos 4 pasos para configurar y personalizar tus notificaciones internas en tiempo real.
+                  </p>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* 🌟 NÚCLEO INTELIGENTE: DETECCIÓN DE RESPUESTAS CRÍTICAS DE CLIENTES      */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border-2 border-emerald-500/40 bg-surface-2 p-5 sm:p-6 space-y-4 shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/80 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-foreground">
+                          Detección Automática de Respuestas Críticas de Clientes (IA Support Dispatch)
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Cuando el cliente escribe estas frases en WhatsApp, el CRM notifica automáticamente al asesor responsable:
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleSimulateNewCustomerEvent}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-500 hover:bg-emerald-500 hover:text-white transition self-start sm:self-auto"
+                      title="Genera un evento de cliente aleatorio para ver cómo se notifica y actualiza el feed"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      Simular evento entrante
+                    </button>
+                  </div>
+
+                  {/* 3 CASOS CLAVE SOLICITADOS POR EL USUARIO */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                    {/* CASO 1: PAGARÉ A LAS 6 PM */}
+                    <div className="rounded-xl border border-amber-500/30 bg-surface p-4 space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5">
+                          ⏰ Compromiso de Pago
+                        </span>
+                        <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping" />
+                      </div>
+                      <p className="text-xs font-bold text-foreground">
+                        Cliente dice: "Pagaré a las 6 pm"
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        La IA extrae la hora ("6:00 PM"), notifica al vendedor asignado y le programa una alarma automática en su WhatsApp para recontactarlo puntualmente.
+                      </p>
+                    </div>
+
+                    {/* CASO 2: YA NO DESEO */}
+                    <div className="rounded-xl border border-rose-500/30 bg-surface p-4 space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400 px-2 py-0.5">
+                          🛑 Intención de Cancelación
+                        </span>
+                        <span className="h-2 w-2 rounded-full bg-rose-500" />
+                      </div>
+                      <p className="text-xs font-bold text-foreground">
+                        Cliente dice: "Ya no deseo el pedido"
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Notifica de inmediato a Soporte/Retención antes de anular. Envía sugerencia de descuento o flete gratis para rescatar la compra.
+                      </p>
+                    </div>
+
+                    {/* CASO 3: QUÉ PASÓ CON MI PEDIDO NO ME AVISAN */}
+                    <div className="rounded-xl border border-sky-500/30 bg-surface p-4 space-y-2 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold rounded-md bg-sky-500/15 text-sky-600 dark:text-sky-400 px-2 py-0.5">
+                          🚨 Reclamo / Ansiedad de Envío
+                        </span>
+                        <span className="h-2 w-2 rounded-full bg-sky-500" />
+                      </div>
+                      <p className="text-xs font-bold text-foreground">
+                        Cliente dice: "¿Qué pasó con mi pedido no me avisan?"
+                      </p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        Alerta de máxima prioridad a Logística. Envía copia del número de guía Shalom y enlace de rastreo en menos de 2 minutos.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* FEED EN VIVO DE ALERTAS NOTIFICADAS (SE VA ACTUALIZANDO EN TIEMPO REAL) */}
+                  <div className="pt-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[11px] font-bold text-foreground uppercase tracking-wider flex items-center gap-1.5">
+                        <Radio className="h-3.5 w-3.5 text-emerald-500 animate-pulse" />
+                        Registro en Vivo de Alertas Notificadas al Soporte (Actualizado en tiempo real):
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Últimos {liveAlertFeed.length} avisos
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                      {liveAlertFeed.map((alert) => (
+                        <div
+                          key={alert.id}
+                          className="rounded-xl border border-border/80 bg-surface p-3 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-2xs animate-in fade-in"
+                        >
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-semibold text-muted-foreground">
+                                {alert.timeAgo}
+                              </span>
+                              <span className="font-bold text-foreground">
+                                {alert.customerName}
+                              </span>
+                              <span className="text-[10px] text-emerald-500 font-mono bg-emerald-500/10 px-1.5 py-0.2 rounded">
+                                {alert.detectedType === "compromiso_hora" && "⏰ Compromiso Hora"}
+                                {alert.detectedType === "ansiedad_logistica" && "🚨 Reclamo Logístico"}
+                                {alert.detectedType === "rechazo_cancelacion" && "🛑 Cancelación"}
+                                {alert.detectedType === "pago_voucher" && "💸 Voucher Yape"}
+                                {alert.detectedType === "pide_humano" && "🧑‍💼 Pide Asesor"}
+                              </span>
+                            </div>
+                            <p className="text-muted-foreground text-[11px] italic font-serif">
+                              {alert.rawText}
+                            </p>
+                            <p className="text-[10px] text-foreground font-medium flex items-center gap-1">
+                              <ArrowRight className="h-3 w-3 text-emerald-500 shrink-0" />
+                              <span>{alert.actionTaken}</span>
+                            </p>
+                          </div>
+
+                          <div className="text-right shrink-0 border-t sm:border-t-0 sm:border-l border-border/50 pt-2 sm:pt-0 sm:pl-3">
+                            <span className="text-[10px] text-muted-foreground block">Notificado a:</span>
+                            <span className="text-xs font-bold text-emerald-500 block">
+                              {alert.notifiedTo}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openSim(
+                                  `[ALERTA EN TIEMPO REAL] 🚨\nCliente: ${alert.customerName}\nMensaje del cliente: ${alert.rawText}\nAcción tomada: ${alert.actionTaken}\nAsesor notificado: ${alert.notifiedTo}`
+                                )
+                              }
+                              className="text-[10px] font-bold text-muted-foreground hover:text-foreground underline mt-1 inline-block"
+                            >
+                              Ver en WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* PASO 1: CONFIGURA EL NÚMERO REMITENTE (WHATSAPP)                          */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-border bg-surface-2 p-5 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500 text-white text-xs font-black shrink-0">
+                      1
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                        Configura el número remitente (WhatsApp)
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Selecciona cuál de tus conexiones de WhatsApp Business enviará las notificaciones.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="max-w-xl space-y-2 pt-1">
+                    <select
+                      value={notifySenderNumber}
+                      onChange={(e) => setNotifySenderNumber(e.target.value)}
+                      className="w-full h-11 rounded-xl border border-border bg-surface px-3.5 text-xs font-bold text-foreground outline-none focus:border-primary shadow-xs"
+                    >
+                      <option value="Maria Clau Alelo - +51 951 874 485">
+                        Maria Clau Alelo - +51 951 874 485 (Conexión Oficial Meta)
+                      </option>
+                      <option value="Tienda Andina Oficial - +51 963 874 485">
+                        Tienda Andina Oficial - +51 963 874 485 (Línea Principal)
+                      </option>
+                      <option value="Soporte Despachos - +51 988 123 456">
+                        Soporte Despachos - +51 988 123 456 (Logística Shalom)
+                      </option>
+                    </select>
+
+                    <div className="flex items-center gap-2 text-[11px] text-emerald-500 font-semibold">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      <span>Conexión Cloud API Oficial verificada · Ping: 24ms · Ventana de envío disponible</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* PASO 2: CONFIGURA TUS DESTINATARIOS                                       */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-border bg-surface-2 p-5 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500 text-white text-xs font-black shrink-0">
+                        2
+                      </span>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                          Configura tus destinatarios
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Elige el canal (WhatsApp, Telegram o ambos) y las notificaciones para cada destinatario.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingRecipient(true)}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-xs self-start sm:self-auto"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Agregar otro destinatario
+                    </button>
+                  </div>
+
+                  {/* FORMULARIO PARA AGREGAR NUEVO DESTINATARIO */}
+                  {isAddingRecipient && (
+                    <div className="rounded-xl border border-emerald-500/40 bg-surface p-4 space-y-3 animate-in fade-in">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-foreground">
+                          Nuevo Destinatario del Equipo:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setIsAddingRecipient(false)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                            Nombre del asesor:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej. Luis Ventas"
+                            value={newRecName}
+                            onChange={(e) => setNewRecName(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-xs outline-none focus:border-primary font-semibold"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                            Canal de recepción:
+                          </label>
+                          <select
+                            value={newRecChannel}
+                            onChange={(e) => setNewRecChannel(e.target.value as any)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface-2 px-2 text-xs outline-none focus:border-primary font-semibold"
+                          >
+                            <option value="whatsapp">💬 Solo WhatsApp</option>
+                            <option value="telegram">✈️ Solo Telegram</option>
+                            <option value="ambos">🌐 Ambos Canales</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-muted-foreground mb-1">
+                            Número WhatsApp:
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="+51 9..."
+                            value={newRecPhone}
+                            onChange={(e) => setNewRecPhone(e.target.value)}
+                            className="w-full h-9 rounded-lg border border-border bg-surface-2 px-2.5 text-xs outline-none focus:border-primary font-mono font-bold"
+                          />
+                        </div>
+
+                        <div className="flex items-end">
+                          <button
+                            type="button"
+                            onClick={handleAddRecipient}
+                            className="w-full h-9 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition flex items-center justify-center gap-1.5"
+                          >
+                            <Check className="h-3.5 w-3.5" /> Guardar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LISTA DE DESTINATARIOS */}
+                  <div className="space-y-3">
+                    {teamRecipients.map((rec) => (
+                      <div
+                        key={rec.id}
+                        className="rounded-xl border border-border bg-surface p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs hover:border-emerald-500/40 transition"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold text-xs shrink-0">
+                            {rec.name.slice(0, 2).toUpperCase()}
+                          </div>
+
+                          <div className="space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-foreground">{rec.name}</span>
+                              <span className="text-[10px] text-muted-foreground font-medium">
+                                ({rec.role})
+                              </span>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-[11px]">
+                              {/* BADGE DEL CANAL */}
+                              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 text-[10px]">
+                                {rec.channel === "whatsapp" && "💬 WhatsApp"}
+                                {rec.channel === "telegram" && "✈️ Telegram"}
+                                {rec.channel === "ambos" && "🌐 WhatsApp + Telegram"}
+                              </span>
+
+                              <span className="font-mono text-muted-foreground font-semibold">
+                                {rec.phone}
+                              </span>
+
+                              {rec.telegramUser && (
+                                <span className="font-mono text-sky-500 text-[10px]">
+                                  {rec.telegramUser}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* ACCIONES Y SELECTOR DE ALERTAS */}
+                        <div className="flex flex-wrap items-center gap-2.5 self-end sm:self-auto">
+                          {/* BOTÓN X/8 ACTIVAS */}
+                          <button
+                            type="button"
+                            onClick={() => setConfiguringRecipientId(rec.id)}
+                            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-1.5 text-xs font-bold text-foreground hover:border-emerald-500 hover:text-emerald-500 transition shadow-2xs"
+                            title="Haz clic para seleccionar qué eventos recibe este asesor"
+                          >
+                            <Sliders className="h-3.5 w-3.5 text-emerald-500" />
+                            <span>
+                              {rec.activeEvents.length}/{NOTIFICATION_EVENT_OPTIONS.length} activas
+                            </span>
+                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                          </button>
+
+                          {/* BOTÓN PROBAR */}
+                          <button
+                            type="button"
+                            onClick={() => handleSendTestNotification(rec)}
+                            className="inline-flex items-center gap-1 rounded-xl border border-border bg-surface px-2.5 py-1.5 text-xs font-semibold text-emerald-500 hover:bg-muted transition"
+                            title="Enviar alerta de prueba a este asesor"
+                          >
+                            <Smartphone className="h-3 w-3" />
+                            <span>Probar</span>
+                          </button>
+
+                          {/* ELIMINAR */}
+                          {teamRecipients.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTeamRecipients((prev) => prev.filter((r) => r.id !== rec.id));
+                                showToast("Destinatario eliminado");
+                              }}
+                              className="text-muted-foreground hover:text-rose-500 p-1 transition"
+                              title="Eliminar destinatario"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* PASO 3: ENVÍA UN MENSAJE PARA ABRIR EL CHAT (WHATSAPP - 24H)              */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-border bg-surface-2 p-5 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500 text-white text-xs font-black shrink-0">
+                      3
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                        Envía un mensaje para abrir el chat (WhatsApp)
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Solo necesario para los destinatarios con WhatsApp para activar la ventana de comunicación.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 space-y-3">
+                    <div className="flex items-start gap-2.5 text-xs">
+                      <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                      <p className="text-foreground font-semibold leading-relaxed">
+                        Para que puedas recibir notificaciones por WhatsApp, cada número destinatario debe enviar un mensaje al número remitente:
+                      </p>
+                    </div>
+
+                    {/* CAJA CON ENLACE DIRECTO DE 1 CLIC */}
+                    <div className="rounded-xl border border-border bg-surface p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                      <div className="space-y-0.5">
+                        <span className="text-[11px] text-muted-foreground block">
+                          Envía un mensaje con cualquier texto (por ejemplo: "Hola") al número remitente:
+                        </span>
+                        <span className="text-base font-extrabold text-emerald-500 font-mono">
+                          +51 963 874 485
+                        </span>
+                      </div>
+
+                      <a
+                        href="https://wa.me/51963874485?text=Hola"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-2 text-xs font-bold text-white hover:opacity-90 transition shadow-sm self-start sm:self-auto"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Abrir WhatsApp y Enviar "Hola"
+                      </a>
+                    </div>
+
+                    {/* DETALLES DE LA VENTANA DE 24 HORAS */}
+                    <div className="space-y-1.5 text-xs text-muted-foreground border-t border-border/50 pt-3">
+                      <p className="font-bold text-foreground text-[11px] flex items-center gap-1.5">
+                        <Clock className="h-3.5 w-3.5 text-amber-500" />
+                        Importante sobre la ventana de 24 horas de Meta:
+                      </p>
+                      <ul className="space-y-1 list-disc list-inside text-[11px] pl-1 leading-relaxed">
+                        <li>WhatsApp requiere que envíes un mensaje al menos cada 24 horas para mantener el chat activo.</li>
+                        <li>Te enviaremos un recordatorio a las 23 horas de inactividad para que no se te olvide reactivarlo.</li>
+                        <li>Si pasan más de 24 horas sin enviar un mensaje, dejarás de recibir notificaciones hasta que envíes otro.</li>
+                        <li className="text-emerald-500 font-medium">
+                          <strong>💡 Tip Pro:</strong> En <strong>Telegram</strong> no existe esta restricción de 24h, por lo que recibirás todas las alertas sin interrupciones.
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ========================================================================= */}
+                {/* PASO 4: GUARDA Y PRUEBA TU CONFIGURACIÓN                                  */}
+                {/* ========================================================================= */}
+                <div className="rounded-2xl border border-border bg-surface-2 p-5 sm:p-6 space-y-4 shadow-xs">
+                  <div className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500 text-white text-xs font-black shrink-0">
+                      4
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                        Guarda y prueba tu configuración
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Guarda los cambios y envía un mensaje de prueba a tus destinatarios para verificar la recepción.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    {/* BOTÓN PRINCIPAL GUARDAR Y PROBAR */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        showToast("¡Configuración de notificaciones guardada exitosamente!");
+                        handleSendTestNotification();
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-xs font-extrabold text-white hover:bg-emerald-500 transition shadow-md"
+                    >
+                      <Check className="h-4 w-4" />
+                      Guardar y Probar Todo
+                    </button>
+
+                    {/* BOTONES INDIVIDUALES PARA CADA DESTINATARIO */}
+                    {teamRecipients.map((rec) => (
+                      <button
+                        key={rec.id}
+                        type="button"
+                        onClick={() => handleSendTestNotification(rec)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface px-4 py-3 text-xs font-bold text-foreground hover:bg-muted transition shadow-2xs"
+                      >
+                        <Smartphone className="h-3.5 w-3.5 text-emerald-500" />
+                        Probar {rec.phone.slice(-4)} ({rec.name.split(" ")[0]})
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL PARA SELECCIONAR EVENTOS ACTIVOS DE UN DESTINATARIO                */}
+      {/* ========================================================================= */}
+      {configuringRecipientId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg rounded-3xl border border-border bg-surface p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            {(() => {
+              const rec = teamRecipients.find((r) => r.id === configuringRecipientId);
+              if (!rec) return null;
+
+              return (
+                <>
+                  <div className="flex items-start justify-between border-b border-border pb-3">
+                    <div>
+                      <span className="rounded-md bg-emerald-500/15 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
+                        Configurar Alertas
+                      </span>
+                      <h3 className="text-base font-extrabold text-foreground mt-1">
+                        Alertas para {rec.name} ({rec.role})
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Selecciona qué eventos de clientes deben notificarse a este asesor ({rec.phone}).
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setConfiguringRecipientId(null)}
+                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    {NOTIFICATION_EVENT_OPTIONS.map((evt) => {
+                      const isChecked = rec.activeEvents.includes(evt.id);
+                      return (
+                        <div
+                          key={evt.id}
+                          onClick={() => handleToggleRecipientEvent(rec.id, evt.id)}
+                          className={`rounded-xl border p-3 cursor-pointer transition select-none flex items-start gap-3 ${
+                            isChecked
+                              ? "border-emerald-500/50 bg-emerald-500/5"
+                              : "border-border bg-surface-2/60 opacity-60 hover:opacity-100"
+                          }`}
+                        >
+                          <div className="mt-0.5">
+                            {isChecked ? (
+                              <CheckSquare className="h-4 w-4 text-emerald-500" />
+                            ) : (
+                              <Square className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="space-y-0.5 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-foreground">{evt.label}</span>
+                              <span className="text-[9px] font-bold uppercase rounded bg-muted px-1.5 py-0.2 text-muted-foreground">
+                                {evt.category}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground leading-relaxed">
+                              {evt.desc}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-2 flex items-center justify-between border-t border-border">
+                    <span className="text-xs text-muted-foreground">
+                      {rec.activeEvents.length} de {NOTIFICATION_EVENT_OPTIONS.length} eventos activados
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setConfiguringRecipientId(null);
+                        showToast(`¡Alertas de ${rec.name} actualizadas!`);
+                      }}
+                      className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-sm"
+                    >
+                      Guardar Preferencias
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
@@ -3569,21 +4519,21 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
             <div className="rounded-[28px] bg-[#0b141a] text-white overflow-hidden flex flex-col h-[520px]">
               <div className="bg-[#202c33] px-3 py-2.5 flex items-center gap-2 border-b border-[#2a3942]">
                 <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white">
-                  TA
+                  PF
                 </div>
                 <div>
                   <div className="flex items-center gap-1">
-                    <span className="text-xs font-bold">Tienda Andina</span>
+                    <span className="text-xs font-bold">PedidoFlow Notificaciones</span>
                     <span className="text-[10px] text-emerald-400">✓</span>
                   </div>
-                  <span className="text-[10px] text-emerald-400">en línea</span>
+                  <span className="text-[10px] text-emerald-400">bot del equipo</span>
                 </div>
               </div>
 
               <div className="flex-1 p-3 overflow-y-auto space-y-3 text-xs bg-[radial-gradient(#1f2c34_1px,transparent_1px)] [background-size:16px_16px]">
                 <div className="flex justify-center">
                   <span className="rounded-md bg-[#182229] px-2 py-0.5 text-[9px] text-[#8696a0]">
-                    🔒 Mensaje protegido
+                    🔒 Alerta interna del equipo
                   </span>
                 </div>
 
@@ -3591,7 +4541,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   <div className="max-w-[88%] rounded-2xl rounded-tr-xs bg-[#005c4b] p-3 text-white shadow-xs leading-relaxed text-[11px] whitespace-pre-line">
                     <p>{simulatorMessage}</p>
                     <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-white/70">
-                      <span>12:30</span>
+                      <span>Ahora</span>
                       <span className="text-sky-400 font-bold">✓✓</span>
                     </div>
                   </div>
