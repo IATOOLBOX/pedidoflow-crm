@@ -1,13 +1,13 @@
-import { CONFIRM_STATUS, type ConfirmStatus } from "@/lib/mock-data";
+import { STATUS_STYLES, type OrderStatus } from "@/lib/mock-data";
 
 export function StatusBadge({
   status,
   size = "md",
 }: {
-  status: ConfirmStatus;
+  status: OrderStatus;
   size?: "sm" | "md";
 }) {
-  const s = CONFIRM_STATUS[status];
+  const s = STATUS_STYLES[status] || { label: status, badge: "bg-muted text-muted-foreground border-transparent", dot: "bg-muted", column: "" };
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap ${s.badge} ${
@@ -20,6 +20,7 @@ export function StatusBadge({
   );
 }
 
-export function StatusDot({ status }: { status: ConfirmStatus }) {
-  return <span className={`h-2 w-2 shrink-0 rounded-full ${CONFIRM_STATUS[status].dot}`} />;
+export function StatusDot({ status }: { status: OrderStatus }) {
+  const s = STATUS_STYLES[status];
+  return <span className={`h-2 w-2 shrink-0 rounded-full ${s ? s.dot : "bg-muted"}`} />;
 }

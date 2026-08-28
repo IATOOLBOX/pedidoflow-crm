@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as ConfiguracionRouteImport } from './routes/configuracion'
+import { Route as ConfirmadosRouteImport } from './routes/confirmados'
 import { Route as ConversacionesRouteImport } from './routes/conversaciones'
 import { Route as IntegracionesRouteImport } from './routes/integraciones'
 import { Route as PagosRouteImport } from './routes/pagos'
@@ -31,6 +32,11 @@ const ClientesRoute = ClientesRouteImport.update({
 const ConfiguracionRoute = ConfiguracionRouteImport.update({
   id: '/configuracion',
   path: '/configuracion',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfirmadosRoute = ConfirmadosRouteImport.update({
+  id: '/confirmados',
+  path: '/confirmados',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConversacionesRoute = ConversacionesRouteImport.update({
@@ -63,6 +69,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/confirmados': typeof ConfirmadosRoute
   '/conversaciones': typeof ConversacionesRoute
   '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/confirmados': typeof ConfirmadosRoute
   '/conversaciones': typeof ConversacionesRoute
   '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/clientes': typeof ClientesRoute
   '/configuracion': typeof ConfiguracionRoute
+  '/confirmados': typeof ConfirmadosRoute
   '/conversaciones': typeof ConversacionesRoute
   '/integraciones': typeof IntegracionesRoute
   '/pagos': typeof PagosRoute
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/configuracion'
+    | '/confirmados'
     | '/conversaciones'
     | '/integraciones'
     | '/pagos'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/configuracion'
+    | '/confirmados'
     | '/conversaciones'
     | '/integraciones'
     | '/pagos'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/'
     | '/clientes'
     | '/configuracion'
+    | '/confirmados'
     | '/conversaciones'
     | '/integraciones'
     | '/pagos'
@@ -127,6 +139,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ClientesRoute: typeof ClientesRoute
   ConfiguracionRoute: typeof ConfiguracionRoute
+  ConfirmadosRoute: typeof ConfirmadosRoute
   ConversacionesRoute: typeof ConversacionesRoute
   IntegracionesRoute: typeof IntegracionesRoute
   PagosRoute: typeof PagosRoute
@@ -155,6 +168,13 @@ declare module '@tanstack/react-router' {
       path: '/configuracion'
       fullPath: '/configuracion'
       preLoaderRoute: typeof ConfiguracionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confirmados': {
+      id: '/confirmados'
+      path: '/confirmados'
+      fullPath: '/confirmados'
+      preLoaderRoute: typeof ConfirmadosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conversaciones': {
@@ -199,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ClientesRoute: ClientesRoute,
   ConfiguracionRoute: ConfiguracionRoute,
+  ConfirmadosRoute: ConfirmadosRoute,
   ConversacionesRoute: ConversacionesRoute,
   IntegracionesRoute: IntegracionesRoute,
   PagosRoute: PagosRoute,

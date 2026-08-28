@@ -14,7 +14,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { StatusDot } from "@/components/status-badge";
 import { OrderSummary } from "@/components/order-summary";
-import { CONFIRM_STATUS, conversations, initials, orders, soles } from "@/lib/mock-data";
+import { STATUS_STYLES, conversations, initials, orders, soles } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/conversaciones")({
   head: () => ({
@@ -105,7 +105,7 @@ function Conversaciones() {
                   <div className="mt-1.5 flex items-center gap-1.5">
                     <StatusDot status={c.status} />
                     <span className="text-[10px] font-medium text-muted-foreground">
-                      {CONFIRM_STATUS[c.status].label}
+                      {STATUS_STYLES[c.status]?.label || c.status}
                     </span>
                     {c.handledBy === "ia" ? (
                       <span className="ml-auto inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">

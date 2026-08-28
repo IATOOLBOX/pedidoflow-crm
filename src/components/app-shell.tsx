@@ -13,12 +13,14 @@ import {
   Bell,
   ChevronDown,
   Store,
+  Truck,
 } from "lucide-react";
 import { payments } from "@/lib/mock-data";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingBag },
+  { to: "/confirmados", label: "Confirmados", icon: Truck },
   { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare },
   { to: "/pagos", label: "Pagos por verificar", icon: ReceiptText, badge: payments.length },
   { to: "/clientes", label: "Clientes", icon: Users },

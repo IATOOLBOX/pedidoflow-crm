@@ -11,12 +11,12 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { StatusDot } from "@/components/status-badge";
 import {
-  CONFIRM_STATUS,
+  STATUS_STYLES,
   activity,
   orders,
   payments,
   soles,
-  type ConfirmStatus,
+  type OrderStatus,
 } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/")({
@@ -38,11 +38,13 @@ export const Route = createFileRoute("/")({
   component: Dashboard,
 });
 
-const counts = (Object.keys(CONFIRM_STATUS) as ConfirmStatus[]).map((k) => ({
-  key: k,
-  label: CONFIRM_STATUS[k].label,
-  value: orders.filter((o) => o.status === k).length,
-}));
+const counts = (Object.keys(STATUS_STYLES) as OrderStatus[])
+  .filter((k) => !["por_despachar", "registrado", "en_transito", "pendiente_recojo", "incidencia", "entregado", "cancelado"].includes(k))
+  .map((k) => ({
+    key: k,
+    label: STATUS_STYLES[k]?.label || k,
+    value: orders.filter((o) => o.status === k).length,
+  }));
 const maxCount = Math.max(...counts.map((c) => c.value));
 
 function Metric({
@@ -83,7 +85,7 @@ function Metric({
 
 function Dashboard() {
   const nuevos = orders.filter((o) => o.age.includes("min") || o.age.includes("h")).length;
-  const pendientes = orders.filter((o) => o.status === "pendiente").length;
+  const pendingOrders = orders.filter((o) => o.status === "wa_entrante" || o.status === "sh_entrante").length;
   const confirmados = orders.filter((o) => o.status === "confirmado").length;
   const tasa = Math.round((confirmados / orders.length) * 100);
 
@@ -93,7 +95,7 @@ function Dashboard() {
         <Metric label="Pedidos nuevos hoy" value={String(nuevos)} hint="Desde Shopify" icon={ShoppingBag} />
         <Metric
           label="Pendientes de confirmar"
-          value={String(pendientes)}
+          value={String(pendingOrders)}
           hint="El bot ya los contactó"
           icon={Clock}
         />
@@ -149,7 +151,7 @@ function Dashboard() {
                 </div>
                 <div className="h-3 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full rounded-full ${CONFIRM_STATUS[c.key].dot}`}
+                    className={`h-full rounded-full ${STATUS_STYLES[c.key]?.dot || "bg-muted"}`}
                     style={{ width: `${(c.value / maxCount) * 100}%` }}
                   />
                 </div>

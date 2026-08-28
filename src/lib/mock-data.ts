@@ -1,61 +1,46 @@
-export type ConfirmStatus =
-  | "pendiente"
-  | "compromiso"
-  | "confirmado"
-  | "noconfirma"
-  | "anulado";
+export type WhatsappStatus = "wa_entrante" | "wa_interaccion" | "wa_compromiso" | "wa_seguimiento" | "confirmado" | "wa_transferido";
+export type ShopifyStatus = "sh_entrante" | "sh_no_responden" | "sh_interaccion" | "sh_seguimiento" | "sh_compromiso" | "confirmado" | "sh_transferido" | "sh_descartado";
+export type OrderStatus = WhatsappStatus | ShopifyStatus;
 
 export type DeliveryStatus =
   | "por_despachar"
-  | "guia_generada"
-  | "en_ruta"
+  | "registrado"
+  | "en_transito"
+  | "pendiente_recojo"
+  | "incidencia"
   | "entregado"
-  | "devuelto";
+  | "cancelado";
 
 export type ShippingType = "local" | "agencia";
 
-export const CONFIRM_STATUS: Record<
-  ConfirmStatus,
-  { label: string; dot: string; badge: string; column: string }
-> = {
-  pendiente: {
-    label: "Pendiente",
-    dot: "bg-status-pendiente",
-    badge: "bg-status-pendiente-soft text-status-pendiente border-status-pendiente/25",
-    column: "border-t-status-pendiente",
-  },
-  compromiso: {
-    label: "Compromiso de pago",
-    dot: "bg-status-compromiso",
-    badge: "bg-status-compromiso-soft text-status-compromiso border-status-compromiso/30",
-    column: "border-t-status-compromiso",
-  },
-  confirmado: {
-    label: "Confirmado",
-    dot: "bg-status-confirmado",
-    badge: "bg-status-confirmado-soft text-status-confirmado border-status-confirmado/30",
-    column: "border-t-status-confirmado",
-  },
-  noconfirma: {
-    label: "No confirma",
-    dot: "bg-status-noconfirma",
-    badge: "bg-status-noconfirma-soft text-status-noconfirma border-status-noconfirma/30",
-    column: "border-t-status-noconfirma",
-  },
-  anulado: {
-    label: "Anulado",
-    dot: "bg-status-anulado",
-    badge: "bg-status-anulado-soft text-status-anulado border-status-anulado/30",
-    column: "border-t-status-anulado",
-  },
-};
+export const STATUS_STYLES: Record<string, { label: string; dot: string; badge: string; column: string }> = {
+  // WhatsApp
+  wa_entrante: { label: "Mensajes entrantes", dot: "bg-status-pendiente", badge: "bg-status-pendiente-soft text-status-pendiente border-status-pendiente/25", column: "border-t-status-pendiente" },
+  wa_interaccion: { label: "Interacción", dot: "bg-blue-500", badge: "bg-blue-50 text-blue-500 border-blue-500/25", column: "border-t-blue-500" },
+  wa_seguimiento: { label: "Seguimiento", dot: "bg-purple-500", badge: "bg-purple-50 text-purple-500 border-purple-500/25", column: "border-t-purple-500" },
+  wa_compromiso: { label: "Compromiso de Pago", dot: "bg-status-compromiso", badge: "bg-status-compromiso-soft text-status-compromiso border-status-compromiso/30", column: "border-t-status-compromiso" },
+  wa_transferido: { label: "Transferidos a Humanos", dot: "bg-gray-500", badge: "bg-gray-50 text-gray-500 border-gray-500/25", column: "border-t-gray-500" },
 
-export const DELIVERY_STATUS: Record<DeliveryStatus, string> = {
-  por_despachar: "Por despachar",
-  guia_generada: "Guía generada",
-  en_ruta: "En ruta",
-  entregado: "Entregado",
-  devuelto: "Devuelto",
+  // Shopify
+  sh_entrante: { label: "Pedidos Entrantes", dot: "bg-status-pendiente", badge: "bg-status-pendiente-soft text-status-pendiente border-status-pendiente/25", column: "border-t-status-pendiente" },
+  sh_no_responden: { label: "No responden (24h)", dot: "bg-status-noconfirma", badge: "bg-status-noconfirma-soft text-status-noconfirma border-status-noconfirma/30", column: "border-t-status-noconfirma" },
+  sh_interaccion: { label: "Interacción", dot: "bg-blue-500", badge: "bg-blue-50 text-blue-500 border-blue-500/25", column: "border-t-blue-500" },
+  sh_seguimiento: { label: "Seguimiento", dot: "bg-purple-500", badge: "bg-purple-50 text-purple-500 border-purple-500/25", column: "border-t-purple-500" },
+  sh_compromiso: { label: "Compromiso de Pago", dot: "bg-status-compromiso", badge: "bg-status-compromiso-soft text-status-compromiso border-status-compromiso/30", column: "border-t-status-compromiso" },
+  sh_transferido: { label: "Transferidos a Humano", dot: "bg-gray-500", badge: "bg-gray-50 text-gray-500 border-gray-500/25", column: "border-t-gray-500" },
+  sh_descartado: { label: "Descartado", dot: "bg-status-anulado", badge: "bg-status-anulado-soft text-status-anulado border-status-anulado/30", column: "border-t-status-anulado" },
+
+  // Shared
+  confirmado: { label: "Confirmado", dot: "bg-status-confirmado", badge: "bg-status-confirmado-soft text-status-confirmado border-status-confirmado/30", column: "border-t-status-confirmado" },
+  
+  // Logistica (for UI use)
+  por_despachar: { label: "Por Despachar", dot: "bg-orange-500", badge: "bg-orange-50 text-orange-500 border-orange-500/25", column: "border-t-orange-500" },
+  registrado: { label: "Registrado", dot: "bg-blue-400", badge: "bg-blue-50 text-blue-400 border-blue-400/25", column: "border-t-blue-400" },
+  en_transito: { label: "En Tránsito", dot: "bg-purple-400", badge: "bg-purple-50 text-purple-400 border-purple-400/25", column: "border-t-purple-400" },
+  pendiente_recojo: { label: "Pendiente de Recojo", dot: "bg-yellow-500", badge: "bg-yellow-50 text-yellow-500 border-yellow-500/25", column: "border-t-yellow-500" },
+  incidencia: { label: "Incidencia", dot: "bg-red-400", badge: "bg-red-50 text-red-400 border-red-400/25", column: "border-t-red-400" },
+  entregado: { label: "Entregado", dot: "bg-green-500", badge: "bg-green-50 text-green-500 border-green-500/25", column: "border-t-green-500" },
+  cancelado: { label: "Cancelado/Devuelto", dot: "bg-red-600", badge: "bg-red-50 text-red-600 border-red-600/25", column: "border-t-red-600" },
 };
 
 export type TimelineStep = {
@@ -75,8 +60,9 @@ export type Order = {
   amount: number;
   advance: number;
   shipping: ShippingType;
-  status: ConfirmStatus;
+  status: OrderStatus;
   delivery: DeliveryStatus;
+  source: "whatsapp" | "shopify";
   createdAt: string;
   age: string;
   items: { name: string; qty: number; price: number }[];
@@ -114,7 +100,8 @@ export const orders: Order[] = [
     advance: 25,
     shipping: "local",
     status: "confirmado",
-    delivery: "en_ruta",
+    delivery: "en_transito",
+    source: "shopify",
     createdAt: "21 ago, 08:12",
     age: "hace 2 h",
     items: [
@@ -142,8 +129,9 @@ export const orders: Order[] = [
     amount: 249,
     advance: 25,
     shipping: "agencia",
-    status: "compromiso",
+    status: "wa_compromiso",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 09:02",
     age: "hace 1 h",
     items: [{ name: "Set de ollas antiadherentes 6 pz", qty: 1, price: 249 }],
@@ -159,8 +147,9 @@ export const orders: Order[] = [
     amount: 129,
     advance: 25,
     shipping: "agencia",
-    status: "pendiente",
+    status: "sh_entrante",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "21 ago, 09:48",
     age: "hace 25 min",
     items: [{ name: "Reloj inteligente FitBand 5", qty: 1, price: 129 }],
@@ -178,7 +167,8 @@ export const orders: Order[] = [
     advance: 40,
     shipping: "agencia",
     status: "confirmado",
-    delivery: "guia_generada",
+    delivery: "registrado",
+    source: "whatsapp",
     createdAt: "21 ago, 07:30",
     age: "hace 3 h",
     items: [
@@ -197,8 +187,9 @@ export const orders: Order[] = [
     amount: 99,
     advance: 25,
     shipping: "agencia",
-    status: "noconfirma",
+    status: "sh_no_responden",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "20 ago, 16:20",
     age: "hace 18 h",
     items: [{ name: "Audífonos inalámbricos BassPod", qty: 1, price: 99 }],
@@ -217,6 +208,7 @@ export const orders: Order[] = [
     shipping: "local",
     status: "confirmado",
     delivery: "entregado",
+    source: "whatsapp",
     createdAt: "20 ago, 11:05",
     age: "hace 23 h",
     items: [{ name: "Plancha de cabello Ionic", qty: 1, price: 159 }],
@@ -242,8 +234,9 @@ export const orders: Order[] = [
     amount: 210,
     advance: 30,
     shipping: "agencia",
-    status: "compromiso",
+    status: "sh_compromiso",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "21 ago, 08:55",
     age: "hace 1 h",
     items: [{ name: "Mochila antirrobo Nomad", qty: 2, price: 105 }],
@@ -259,8 +252,9 @@ export const orders: Order[] = [
     amount: 75,
     advance: 20,
     shipping: "local",
-    status: "pendiente",
+    status: "wa_entrante",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 10:02",
     age: "hace 11 min",
     items: [{ name: "Organizador de cocina 3 niveles", qty: 1, price: 75 }],
@@ -276,8 +270,9 @@ export const orders: Order[] = [
     amount: 289,
     advance: 40,
     shipping: "agencia",
-    status: "anulado",
+    status: "sh_descartado",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "19 ago, 15:40",
     age: "hace 2 días",
     items: [{ name: "Bicicleta plegable Urbana", qty: 1, price: 289 }],
@@ -293,8 +288,9 @@ export const orders: Order[] = [
     amount: 139,
     advance: 25,
     shipping: "agencia",
-    status: "pendiente",
+    status: "wa_entrante",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 09:58",
     age: "hace 15 min",
     items: [{ name: "Termo inteligente 750ml", qty: 1, price: 139 }],
@@ -313,6 +309,7 @@ export const orders: Order[] = [
     shipping: "local",
     status: "confirmado",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "21 ago, 07:58",
     age: "hace 2 h",
     items: [
@@ -331,8 +328,9 @@ export const orders: Order[] = [
     amount: 89,
     advance: 20,
     shipping: "agencia",
-    status: "compromiso",
+    status: "wa_compromiso",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 08:20",
     age: "hace 2 h",
     items: [{ name: "Kit de brochas de maquillaje", qty: 1, price: 89 }],
@@ -348,8 +346,9 @@ export const orders: Order[] = [
     amount: 199,
     advance: 25,
     shipping: "local",
-    status: "noconfirma",
+    status: "sh_no_responden",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "20 ago, 12:15",
     age: "hace 22 h",
     items: [{ name: "Aspiradora inalámbrica 2 en 1", qty: 1, price: 199 }],
@@ -367,7 +366,8 @@ export const orders: Order[] = [
     advance: 40,
     shipping: "agencia",
     status: "confirmado",
-    delivery: "en_ruta",
+    delivery: "en_transito",
+    source: "whatsapp",
     createdAt: "20 ago, 09:10",
     age: "hace 1 día",
     items: [{ name: "Cafetera espresso compacta", qty: 1, price: 269 }],
@@ -392,8 +392,9 @@ export const orders: Order[] = [
     amount: 145,
     advance: 25,
     shipping: "agencia",
-    status: "pendiente",
+    status: "sh_entrante",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "21 ago, 10:08",
     age: "hace 5 min",
     items: [{ name: "Parlante Bluetooth Boom 20W", qty: 1, price: 145 }],
@@ -409,8 +410,9 @@ export const orders: Order[] = [
     amount: 119,
     advance: 25,
     shipping: "local",
-    status: "compromiso",
+    status: "wa_compromiso",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 09:33",
     age: "hace 40 min",
     items: [{ name: "Set sábanas king 400 hilos", qty: 1, price: 119 }],
@@ -426,8 +428,9 @@ export const orders: Order[] = [
     amount: 355,
     advance: 50,
     shipping: "agencia",
-    status: "anulado",
-    delivery: "devuelto",
+    status: "sh_descartado",
+    delivery: "cancelado",
+    source: "shopify",
     createdAt: "18 ago, 14:00",
     age: "hace 3 días",
     items: [{ name: "Horno eléctrico 45L", qty: 1, price: 355 }],
@@ -445,7 +448,8 @@ export const orders: Order[] = [
     advance: 25,
     shipping: "agencia",
     status: "confirmado",
-    delivery: "guia_generada",
+    delivery: "registrado",
+    source: "whatsapp",
     createdAt: "21 ago, 08:44",
     age: "hace 1 h",
     items: [{ name: "Ventilador torre silencioso", qty: 1, price: 179 }],
@@ -461,8 +465,9 @@ export const orders: Order[] = [
     amount: 65,
     advance: 20,
     shipping: "local",
-    status: "noconfirma",
+    status: "sh_no_responden",
     delivery: "por_despachar",
+    source: "shopify",
     createdAt: "20 ago, 18:50",
     age: "hace 15 h",
     items: [{ name: "Lámpara LED de escritorio", qty: 1, price: 65 }],
@@ -478,8 +483,9 @@ export const orders: Order[] = [
     amount: 229,
     advance: 30,
     shipping: "agencia",
-    status: "pendiente",
+    status: "wa_entrante",
     delivery: "por_despachar",
+    source: "whatsapp",
     createdAt: "21 ago, 10:11",
     age: "hace 2 min",
     items: [{ name: "Batidora de pie 800W", qty: 1, price: 229 }],
@@ -579,7 +585,7 @@ export type Conversation = {
   time: string;
   unread: number;
   handledBy: "ia" | "humano";
-  status: ConfirmStatus;
+  status: OrderStatus;
   messages: ChatMessage[];
 };
 
@@ -593,7 +599,7 @@ export const conversations: Conversation[] = [
     time: "09:58",
     unread: 2,
     handledBy: "humano",
-    status: "compromiso",
+    status: "wa_compromiso",
     messages: [
       {
         id: "m1",
@@ -621,7 +627,7 @@ export const conversations: Conversation[] = [
     time: "09:52",
     unread: 1,
     handledBy: "ia",
-    status: "pendiente",
+    status: "wa_entrante",
     messages: [
       {
         id: "m1",
@@ -668,7 +674,7 @@ export const conversations: Conversation[] = [
     time: "Ayer",
     unread: 0,
     handledBy: "ia",
-    status: "noconfirma",
+    status: "confirmado",
     messages: [
       {
         id: "m1",
@@ -693,7 +699,7 @@ export const conversations: Conversation[] = [
     time: "09:20",
     unread: 1,
     handledBy: "humano",
-    status: "compromiso",
+    status: "wa_compromiso",
     messages: [
       {
         id: "m1",
@@ -812,10 +818,10 @@ export const templates: Template[] = [
 ];
 
 export const activity = [
-  { id: "a1", text: "Juan Pérez confirmó su pedido #1234", time: "hace 8 min", tone: "confirmado" as ConfirmStatus },
-  { id: "a2", text: "Nueva captura de pago de María López", time: "hace 14 min", tone: "compromiso" as ConfirmStatus },
-  { id: "a3", text: "Pedido #1230 en ruta con Shalom", time: "hace 32 min", tone: "confirmado" as ConfirmStatus },
-  { id: "a4", text: "Luis Fernández no respondió al 3er recordatorio", time: "hace 1 h", tone: "noconfirma" as ConfirmStatus },
-  { id: "a5", text: "Pedido #1242 anulado por el vendedor", time: "hace 2 h", tone: "anulado" as ConfirmStatus },
-  { id: "a6", text: "Rosa Huamán envió su DNI para la agencia", time: "hace 3 h", tone: "pendiente" as ConfirmStatus },
+  { id: "a1", text: "Juan Pérez confirmó su pedido #1234", time: "hace 8 min", tone: "confirmado" as OrderStatus },
+  { id: "a2", text: "Nueva captura de pago de María López", time: "hace 14 min", tone: "wa_compromiso" as OrderStatus },
+  { id: "a3", text: "Pedido #1230 en ruta con Shalom", time: "hace 32 min", tone: "confirmado" as OrderStatus },
+  { id: "a4", text: "Luis Fernández no respondió al 3er recordatorio", time: "hace 1 h", tone: "sh_no_responden" as OrderStatus },
+  { id: "a5", text: "Pedido #1242 anulado por el vendedor", time: "hace 2 h", tone: "sh_descartado" as OrderStatus },
+  { id: "a6", text: "Rosa Huamán envió su DNI para la agencia", time: "hace 3 h", tone: "wa_entrante" as OrderStatus },
 ];

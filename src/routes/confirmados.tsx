@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Calendar, LayoutGrid, List, Search, X } from "lucide-react";
+import { Calendar, LayoutGrid, List, Search, X, Printer, FileDown, Plus } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { StatusBadge } from "@/components/status-badge";
 import { OrderSummary, ShippingTag } from "@/components/order-summary";
@@ -9,51 +9,34 @@ import {
   initials,
   orders,
   soles,
-  type OrderStatus,
-  type WhatsappStatus,
-  type ShopifyStatus,
   type DeliveryStatus,
   type Order,
 } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/pedidos")({
+export const Route = createFileRoute("/confirmados")({
   head: () => ({
-    meta: [
-      { title: "Pedidos — PedidoFlow" },
-      {
-        name: "description",
-        content:
-          "Tablero Kanban y tabla de pedidos contraentrega por estado de confirmación, ciudad y tipo de envío.",
-      },
-      { property: "og:title", content: "Pedidos — PedidoFlow" },
-      {
-        property: "og:description",
-        content: "Kanban de confirmación, filtros y detalle completo de cada pedido contraentrega.",
-      },
-    ],
+    meta: [{ title: "Confirmados y Logística — PedidoFlow" }],
   }),
-  component: PedidosPage,
+  component: ConfirmadosPage,
 });
 
-const whatsappColumns: WhatsappStatus[][] = [
-  ["wa_entrante"], ["wa_interaccion"], ["wa_seguimiento"], ["wa_compromiso"], ["confirmado"], ["wa_transferido"]
-];
-const whatsappTitles = [
-  "Mensajes entrantes", "Interacción", "Seguimiento", "Compromiso de Pago", "Confirmado", "Transferidos a Humanos"
-];
-
-const shopifyColumns: ShopifyStatus[][] = [
-  ["sh_entrante"], ["sh_no_responden"], ["sh_interaccion"], ["sh_seguimiento"], ["sh_compromiso"], ["confirmado"], ["sh_transferido"], ["sh_descartado"]
-];
-const shopifyTitles = [
-  "Pedidos Entrantes", "No responden (24h)", "Interacción", "Seguimiento", "Compromiso de Pago", "Confirmado", "Transferidos a Humano", "Descartado"
-];
-
 const deliveryColumns: DeliveryStatus[][] = [
-  ["por_despachar"], ["registrado"], ["en_transito"], ["pendiente_recojo"], ["incidencia"], ["entregado"], ["cancelado"]
+  ["por_despachar"],
+  ["registrado"],
+  ["en_transito"],
+  ["pendiente_recojo"],
+  ["incidencia"],
+  ["entregado"],
+  ["cancelado"],
 ];
 const deliveryTitles = [
-  "Por Despachar", "Registrado", "En Tránsito", "Pendiente de Recojo", "Incidencia", "Entregado", "Cancelado/Devuelto"
+  "Por Despachar",
+  "Registrado",
+  "En Tránsito",
+  "Pendiente de Recojo",
+  "Incidencia",
+  "Entregado",
+  "Cancelado/Devuelto",
 ];
 
 function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
@@ -82,10 +65,8 @@ function OrderCard({ order, onClick }: { order: Order; onClick: () => void }) {
   );
 }
 
-function PedidosPage() {
+function ConfirmadosPage() {
   const [view, setView] = useState<"kanban" | "tabla">("kanban");
-  const [stage, setStage] = useState<"whatsapp" | "confirmacion" | "logistica">("whatsapp");
-  const [status, setStatus] = useState<"todos" | OrderStatus>("todos");
   const [shipping, setShipping] = useState<"todos" | "local" | "agencia">("todos");
   const [range, setRange] = useState("7");
   const [q, setQ] = useState("");
@@ -95,126 +76,97 @@ function PedidosPage() {
     () =>
       orders.filter(
         (o) =>
-          (status === "todos" || o.status === status) &&
+          o.status === "confirmado" &&
           (shipping === "todos" || o.shipping === shipping) &&
           (q.trim() === "" ||
             o.customer.toLowerCase().includes(q.toLowerCase()) ||
             o.phone.includes(q) ||
             o.number.includes(q)),
       ),
-    [status, shipping, q],
+    [shipping, q],
   );
 
   const selectClass =
     "h-9 rounded-lg border border-border bg-surface px-3 text-sm outline-none focus:border-primary";
 
   return (
-    <AppShell title="Pedidos" subtitle={`${filtered.length} pedidos coinciden con tus filtros`}>
-      <div className="card-surface mb-4 flex flex-wrap items-center gap-2 p-3">
-        {view === "kanban" && (
-          <div className="flex rounded-lg bg-muted p-1 mr-2">
-            {(["whatsapp", "confirmacion", "logistica"] as const).map((s) => (
+    <AppShell title="Confirmados" subtitle={`${filtered.length} pedidos confirmados listos para logística`}>
+      <div className="card-surface mb-4 flex flex-col gap-3 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
+          <div className="flex items-center gap-2">
+            <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition hover:opacity-90">
+              <Plus className="h-4 w-4" />
+              Pedido Manual
+            </button>
+            <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold transition hover:bg-muted">
+              <Printer className="h-4 w-4" />
+              Imprimir Rótulos
+            </button>
+            <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold transition hover:bg-muted">
+              <FileDown className="h-4 w-4" />
+              Exportar
+            </button>
+          </div>
+          
+          <div className="flex rounded-lg bg-muted p-1">
+            {(["kanban", "tabla"] as const).map((v) => (
               <button
-                key={s}
-                onClick={() => setStage(s)}
+                key={v}
+                onClick={() => setView(v)}
                 className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition ${
-                  stage === s ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
+                  view === v ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
                 }`}
               >
-                {s === "confirmacion" ? "Shopify" : s}
+                {v === "kanban" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
+                {v}
               </button>
             ))}
           </div>
-        )}
-        <div className="flex rounded-lg bg-muted p-1">
-          {(["kanban", "tabla"] as const).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium capitalize transition ${
-                view === v ? "bg-surface text-foreground shadow-sm" : "text-muted-foreground"
-              }`}
-            >
-              {v === "kanban" ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
-              {v}
-            </button>
-          ))}
         </div>
 
-        <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Buscar por nombre, teléfono o # pedido"
-            className="h-9 w-full rounded-lg border border-border bg-surface pr-3 pl-9 text-sm outline-none focus:border-primary"
-          />
-        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[200px] flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nombre, teléfono o # pedido"
+              className="h-9 w-full rounded-lg border border-border bg-surface pr-3 pl-9 text-sm outline-none focus:border-primary"
+            />
+          </div>
 
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as OrderStatus | "todos")}
-          className={selectClass}
-        >
-          <option value="todos">Todos los estados</option>
-          {(Object.keys(STATUS_STYLES) as OrderStatus[])
-            .filter((k) => !["por_despachar", "registrado", "en_transito", "pendiente_recojo", "incidencia", "entregado", "cancelado"].includes(k))
-            .map((k) => (
-            <option key={k} value={k}>
-              {STATUS_STYLES[k]?.label || k}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={shipping}
-          onChange={(e) => setShipping(e.target.value as "todos" | "local" | "agencia")}
-          className={selectClass}
-        >
-          <option value="todos">Todo tipo de envío</option>
-          <option value="local">Local (contraentrega)</option>
-          <option value="agencia">Agencia (Shalom)</option>
-        </select>
-
-        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3">
-          <Calendar className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
           <select
-            value={range}
-            onChange={(e) => setRange(e.target.value)}
-            className="h-9 bg-transparent text-sm outline-none"
+            value={shipping}
+            onChange={(e) => setShipping(e.target.value as "todos" | "local" | "agencia")}
+            className={selectClass}
           >
-            <option value="1">Hoy</option>
-            <option value="7">Últimos 7 días</option>
-            <option value="30">Últimos 30 días</option>
+            <option value="todos">Todo tipo de envío</option>
+            <option value="local">Local (contraentrega)</option>
+            <option value="agencia">Agencia (Shalom)</option>
           </select>
+
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3">
+            <Calendar className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
+            <select
+              value={range}
+              onChange={(e) => setRange(e.target.value)}
+              className="h-9 bg-transparent text-sm outline-none"
+            >
+              <option value="1">Hoy</option>
+              <option value="7">Últimos 7 días</option>
+              <option value="30">Últimos 30 días</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {view === "kanban" ? (
         <div className="grid gap-3 xl:grid-cols-4">
-          {(stage === "logistica" ? deliveryColumns : stage === "whatsapp" ? whatsappColumns : shopifyColumns).map((group, i) => {
-            const isDelivery = stage === "logistica";
-            
-            const items = filtered.filter((o) => {
-              if (isDelivery) {
-                return (group as DeliveryStatus[]).includes(o.delivery) && o.status === "confirmado";
-              }
-              const inGroup = (group as OrderStatus[]).includes(o.status);
-              return inGroup && o.source === (stage === "whatsapp" ? "whatsapp" : "shopify");
-            });
-            
-            let colorClass = "";
-            let title = "";
-            
-            if (isDelivery) {
-              const head = group[0] as DeliveryStatus;
-              colorClass = STATUS_STYLES[head]?.column || "";
-              title = deliveryTitles[i] || "";
-            } else {
-              const head = group[0] as OrderStatus;
-              colorClass = STATUS_STYLES[head]?.column || "";
-              title = (stage === "whatsapp" ? whatsappTitles[i] : shopifyTitles[i]) || "";
-            }
+          {deliveryColumns.map((group, i) => {
+            const items = filtered.filter((o) => (group as DeliveryStatus[]).includes(o.delivery));
+            const head = group[0] as DeliveryStatus;
+            const colorClass = STATUS_STYLES[head]?.column || "";
+            const title = deliveryTitles[i] || "";
 
             return (
               <section
@@ -258,7 +210,12 @@ function PedidosPage() {
             <tbody className="divide-y divide-border">
               {filtered.map((o) => (
                 <tr key={o.id} className="hover:bg-muted/50">
-                  <td className="px-4 py-3 font-semibold">{o.number}</td>
+                  <td className="px-4 py-3 font-semibold">
+                    <div className="flex items-center gap-2">
+                      <input type="checkbox" className="rounded border-border text-primary" />
+                      {o.number}
+                    </div>
+                  </td>
                   <td className="px-4 py-3">{o.customer}</td>
                   <td className="px-4 py-3 text-muted-foreground">{o.city}</td>
                   <td className="px-4 py-3">
@@ -275,7 +232,7 @@ function PedidosPage() {
                       onClick={() => setSelected(o)}
                       className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
                     >
-                      Ver
+                      Gestionar
                     </button>
                   </td>
                 </tr>

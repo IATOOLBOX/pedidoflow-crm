@@ -9,7 +9,7 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { DELIVERY_STATUS, initials, soles, type Order } from "@/lib/mock-data";
+import { STATUS_STYLES, initials, soles, type Order } from "@/lib/mock-data";
 import { StatusBadge } from "./status-badge";
 
 export function ShippingTag({ type }: { type: Order["shipping"] }) {
@@ -31,7 +31,7 @@ export function OrderSummary({ order, compact = false }: { order: Order; compact
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={order.status} />
         <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
-          {DELIVERY_STATUS[order.delivery]}
+          {STATUS_STYLES[order.delivery]?.label}
         </span>
         <ShippingTag type={order.shipping} />
       </div>
