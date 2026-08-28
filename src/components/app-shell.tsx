@@ -14,6 +14,7 @@ import {
   ChevronDown,
   Store,
   Truck,
+  Workflow,
 } from "lucide-react";
 import { payments } from "@/lib/mock-data";
 
@@ -24,6 +25,7 @@ const nav = [
   { to: "/conversaciones", label: "Conversaciones", icon: MessagesSquare },
   { to: "/pagos", label: "Pagos por verificar", icon: ReceiptText, badge: payments.length },
   { to: "/clientes", label: "Clientes", icon: Users },
+  { to: "/workflows", label: "Workflows", icon: Workflow },
   { to: "/plantillas", label: "Plantillas de WhatsApp", icon: FileText },
   { to: "/integraciones", label: "Integraciones", icon: Plug },
   { to: "/configuracion", label: "Configuración", icon: Settings },

@@ -11,9 +11,14 @@ Objetivo: Terminar de maquetar en Antigravity los módulos pendientes para tener
 - `[x]` Estados exactos y columnas dinámicas en el Kanban de Pedidos (WhatsApp, Shopify, Logística).
 - `[x]` Filtro de fechas (DateRangePicker) con opciones rápidas.
 - `[x]` **Perfil de Cliente Enriquecido**: Vista CRM de clientes con métricas de LTV, tasa de confirmación, etiquetas (VIP, Problemático, etc.), filtros avanzados y panel lateral detallado.
+- `[x]` **Suite de Workflows & Rompe-Vistos (`/workflows`)**:
+  - Vista interactiva con 5 tarjetas y animación drop-bounce al entrar.
+  - Barra de navegación dock superior con retorno a la suite.
+  - Rompe-Vistos completo: selección de producto (con catálogo extendido), tipo de entrega (Contraentrega vs Shalom), modo manual o IAFlow.
+  - Tiempos de inactividad flexibles con límites numéricos estrictos (segundos, minutos, horas) y botones multimedia (imagen, video, audio).
+  - Listado activo agrupado por producto (colapsado por defecto), orden cronológico de envío (menor a mayor tiempo), edición en caliente de cada flujo, y filtros instantáneos por canal (WhatsApp, Shopify, Logística) y por etapas del pedido.
 
 ### 📝 Pendiente por construir visualmente:
-- `[ ]` **Sistema de "Rompevistas"**: Interfaz para reglas de recuperación automática de clientes sin respuesta.
 - `[ ]` **Ampliación de Plantillas**: Pantalla enriquecida por categorías (Confirmación, Rompevistas, Logística, etc.) con variables dinámicas.
 - `[ ]` **Equipo y Roles**: Pantalla de gestión de usuarios y permisos (Administrador, Ventas, Logística).
 - `[ ]` **Catálogo de Productos**: Módulo visual para el control básico de stock.

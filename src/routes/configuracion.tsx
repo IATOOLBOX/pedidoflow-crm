@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { MapPin, Plus, Trash2 } from "lucide-react";
+import { MapPin, Plus, Trash2, Workflow, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 
 export const Route = createFileRoute("/configuracion")({
@@ -127,10 +127,27 @@ function ConfiguracionPage() {
 
           {tab === "Seguimiento" ? (
             <div className="max-w-lg space-y-5">
+              <div className="rounded-xl border border-primary/30 bg-primary/10 p-4">
+                <div className="flex items-center gap-2 text-primary font-bold text-sm mb-1">
+                  <Workflow className="h-4 w-4" />
+                  Nuevo: Constructor Visual de Workflows
+                </div>
+                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
+                  Ahora puedes configurar secuencias avanzadas de Rompevistas, condiciones por visto y simular la experiencia del cliente en WhatsApp directamente desde la nueva vista de Workflows.
+                </p>
+                <Link
+                  to="/workflows"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition"
+                >
+                  Abrir Workflows
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
               <div>
-                <h2 className="text-base font-bold">Seguimiento de mensajes</h2>
+                <h2 className="text-base font-bold">Seguimiento de mensajes (Básico)</h2>
                 <p className="text-sm text-muted-foreground">
-                  Recordatorios automáticos cuando el cliente no responde.
+                  Reglas rápidas para recordatorios automáticos cuando el cliente no responde.
                 </p>
               </div>
               <div>
