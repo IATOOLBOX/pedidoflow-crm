@@ -16,7 +16,10 @@ Objetivo: Terminar de maquetar en Antigravity los módulos pendientes para tener
   - Barra de navegación dock superior con retorno a la suite.
   - Rompe-Vistos completo: selección de producto (con catálogo extendido), tipo de entrega (Contraentrega vs Shalom), modo manual o IAFlow.
   - Tiempos de inactividad flexibles con límites numéricos estrictos (segundos, minutos, horas) y botones multimedia (imagen, video, audio).
-  - Listado activo agrupado por producto (colapsado por defecto), orden cronológico de envío (menor a mayor tiempo), edición en caliente de cada flujo, y filtros instantáneos por canal (WhatsApp, Shopify, Logística) y por etapas del pedido.
+  - Confirmación y Logística completa: opciones "Crear Nueva" y "Ya tengo mi plantilla" para 4 tipos de mensajes (Confirmación regular, Pedidos preliminares, Pedido enviado por agencia, Pedido llegó), inserción de variables en un clic, simulación y eliminación.
+  - Módulo de Upsells interactivo: botón "CREAR UPSELL" primero, triggers post-confirmación o post-entrega, oferta de catálogo completo (PDF) o productos específicos, copy con variables dinámicas, adjuntos (imagen, video, voz, PDF) y switches individuales de Prendido/Apagado.
+  - Botón interactivo de Prendido y Apagado en cada flujo guardado de Rompe-Vistos (conmutación en caliente).
+  - Selector global de 3 Temas en `AppShell` (☀️ Normal, 🌓 Medio Oscuro / Dim, 🌙 Oscuro / Deep Dark) con persistencia en localStorage.
 
 ### 📝 Pendiente por construir visualmente:
 - `[ ]` **Ampliación de Plantillas**: Pantalla enriquecida por categorías (Confirmación, Rompevistas, Logística, etc.) con variables dinámicas.

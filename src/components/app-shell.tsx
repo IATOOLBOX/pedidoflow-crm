@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -15,8 +15,13 @@ import {
   Store,
   Truck,
   Workflow,
+  Sun,
+  CloudMoon,
+  Moon,
 } from "lucide-react";
 import { payments } from "@/lib/mock-data";
+
+export type ThemeMode = "normal" | "dim" | "dark";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -43,6 +48,32 @@ export function AppShell({
   contentClassName?: string;
 }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("pedidoflow_theme") as ThemeMode) || "normal";
+    }
+    return "normal";
+  });
+
+  const changeTheme = (newTheme: ThemeMode) => {
+    setCurrentTheme(newTheme);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("pedidoflow_theme", newTheme);
+      const root = document.documentElement;
+      root.classList.remove("dark", "dim");
+      if (newTheme === "dim") {
+        root.classList.add("dark", "dim");
+      } else if (newTheme === "dark") {
+        root.classList.add("dark");
+      }
+    }
+  };
+
+  useEffect(() => {
+    const saved = (localStorage.getItem("pedidoflow_theme") as ThemeMode) || "normal";
+    changeTheme(saved);
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -110,8 +141,51 @@ export function AppShell({
             />
           </div>
 
-          <div className="ml-auto flex items-center gap-3">
-            <button className="relative rounded-lg p-2 hover:bg-muted">
+          <div className="ml-auto flex items-center gap-2.5">
+            {/* SELECTOR DE TEMA: NORMAL, MEDIO OSCURO, OSCURO */}
+            <div className="flex items-center rounded-xl bg-muted/70 p-1 border border-border">
+              <button
+                type="button"
+                onClick={() => changeTheme("normal")}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                  currentTheme === "normal"
+                    ? "bg-surface text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Tema Normal (Claro)"
+              >
+                <Sun className="h-3.5 w-3.5 text-amber-500" />
+                <span className="hidden sm:inline">Normal</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => changeTheme("dim")}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                  currentTheme === "dim"
+                    ? "bg-surface text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Tema Medio Oscuro (Pizarra / Twilight)"
+              >
+                <CloudMoon className="h-3.5 w-3.5 text-sky-400" />
+                <span className="hidden sm:inline">Medio</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => changeTheme("dark")}
+                className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs transition ${
+                  currentTheme === "dark"
+                    ? "bg-surface text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                title="Tema Oscuro (Deep Dark)"
+              >
+                <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                <span className="hidden sm:inline">Oscuro</span>
+              </button>
+            </div>
+
+            <button className="relative rounded-lg p-2 hover:bg-muted" title="Notificaciones">
               <Bell className="h-[18px] w-[18px] text-muted-foreground" strokeWidth={1.75} />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-status-noconfirma" />
             </button>

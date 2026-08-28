@@ -42,6 +42,8 @@ import {
   FileText,
   AlertCircle,
   Copy,
+  Power,
+  FileCode,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { templates as mockTemplates, type Template } from "@/lib/mock-data";
@@ -301,6 +303,18 @@ interface SavedRompeVistoFlow {
   updatedAt: number;
 }
 
+// Estructura de un Upsell
+interface UpsellItem {
+  id: string;
+  trigger: "post_confirmacion" | "post_entrega";
+  offerType: "catalogo_pdf" | "productos_especificos";
+  selectedProduct?: string;
+  copy: string;
+  attachment: { type: "imagen" | "video" | "audio" | "pdf"; name: string } | null;
+  active: boolean;
+  createdAt: string;
+}
+
 const extendedCatalogList = [
   "Pack Bóxers Microfibra Dry-Fit (x6)",
   "Faja Reductora Térmica WaistPro",
@@ -363,11 +377,11 @@ export function WorkflowsPage() {
   ]);
 
   // ===========================================================================
-  // ESTADOS CONFIRMACIÓN Y LOGÍSTICA (4 MENSAJES CONFIGURABLES)
+  // ESTADOS CONFIRMACIÓN Y LOGÍSTICA
   // ===========================================================================
   const [confLogSubTab, setConfLogSubTab] = useState<"confirmaciones" | "logistica">("confirmaciones");
 
-  // 1. Confirmaciones: Mensaje de Confirmación Regular
+  // 1. Confirmaciones: Mensaje Regular
   const [confMsgRegular, setConfMsgRegular] = useState<FlowMessageConfig>({
     mode: "nueva",
     isLinked: true,
@@ -382,7 +396,7 @@ Puedes hacer seguimiento de tu pedido con el número de guía. ¡Gracias por tu 
     updatedAt: "Guardado recientemente",
   });
 
-  // 2. Confirmaciones: Mensaje para Pedidos Preliminares (Drafts / Carritos)
+  // 2. Confirmaciones: Mensaje Preliminar
   const [confMsgPreliminar, setConfMsgPreliminar] = useState<FlowMessageConfig>({
     mode: "nueva",
     isLinked: false,
@@ -391,7 +405,7 @@ Puedes hacer seguimiento de tu pedido con el número de guía. ¡Gracias por tu 
     selectedTemplateId: "t2",
   });
 
-  // 3. Logística: Pedido Enviado por Agencia (Despacho / Guía)
+  // 3. Logística: Enviado por Agencia
   const [logMsgEnviado, setLogMsgEnviado] = useState<FlowMessageConfig>({
     mode: "nueva",
     isLinked: true,
@@ -403,7 +417,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     updatedAt: "Guardado recientemente",
   });
 
-  // 4. Logística: El Pedido Llegó a Agencia Destino
+  // 4. Logística: Llegó a Agencia
   const [logMsgLlego, setLogMsgLlego] = useState<FlowMessageConfig>({
     mode: "nueva",
     isLinked: false,
@@ -413,7 +427,120 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     selectedTemplateId: "t3",
   });
 
-  // Notificación tipo toast al guardar/vincular
+  // ===========================================================================
+  // ESTADOS UPSELLS (VENTA CRUZADA)
+  // ===========================================================================
+  const [upsells, setUpsells] = useState<UpsellItem[]>([
+    {
+      id: "upsell-1",
+      trigger: "post_confirmacion",
+      offerType: "productos_especificos",
+      selectedProduct: "Pack 3x Medias Bamboo (40% OFF)",
+      copy: "¡Excelente [Nombre]! Ya guardamos tu pedido. 🎉 Por confirmar ahora, puedes añadir un Pack de 3 pares de Medias Bamboo con 40% OFF por solo S/ 29 adicionales. ¿Deseas agregarlo a tu paquete?",
+      attachment: { type: "imagen", name: "combo_medias_promo.jpg" },
+      active: true,
+      createdAt: "Activo",
+    },
+    {
+      id: "upsell-2",
+      trigger: "post_entrega",
+      offerType: "catalogo_pdf",
+      selectedProduct: "Catálogo Colección 2026",
+      copy: "¡Hola [Nombre]! Esperamos que disfrutes tu compra 🚚🙌 Te compartimos nuestro Catálogo Completo en PDF con descuentos exclusivos de hasta 30% en tu próxima compra.",
+      attachment: { type: "pdf", name: "catalogo_completo_pedidoflow.pdf" },
+      active: true,
+      createdAt: "Activo",
+    },
+  ]);
+
+  const [isCreatingUpsell, setIsCreatingUpsell] = useState<boolean>(false);
+  const [editingUpsellId, setEditingUpsellId] = useState<string | null>(null);
+
+  // Formulario de Upsell
+  const [upTrigger, setUpTrigger] = useState<"post_confirmacion" | "post_entrega">("post_confirmacion");
+  const [upOfferType, setUpOfferType] = useState<"catalogo_pdf" | "productos_especificos">("productos_especificos");
+  const [upProduct, setUpProduct] = useState("Pack Bóxers Microfibra Dry-Fit (x6)");
+  const [upCopy, setUpCopy] = useState(
+    "¡Excelente [Nombre]! Ya guardamos tu pedido. 🎉 Por confirmar ahora, puedes añadir un Pack de 3 pares de Medias Bamboo con 40% OFF por solo S/ 29 adicionales. ¿Deseas agregarlo a tu paquete?"
+  );
+  const [upAttachment, setUpAttachment] = useState<{
+    type: "imagen" | "video" | "audio" | "pdf";
+    name: string;
+  } | null>({ type: "imagen", name: "foto_combo_upsell.jpg" });
+  const [upActive, setUpActive] = useState<boolean>(true);
+
+  // Guardar o Actualizar Upsell
+  const handleSaveUpsell = () => {
+    if (editingUpsellId) {
+      setUpsells((prev) =>
+        prev.map((u) =>
+          u.id === editingUpsellId
+            ? {
+                ...u,
+                trigger: upTrigger,
+                offerType: upOfferType,
+                selectedProduct: upOfferType === "productos_especificos" ? upProduct : "Catálogo Completo PDF",
+                copy: upCopy,
+                attachment: upAttachment,
+                active: upActive,
+              }
+            : u
+        )
+      );
+      setEditingUpsellId(null);
+      showToast("¡Upsell actualizado exitosamente!");
+    } else {
+      const newUp: UpsellItem = {
+        id: `upsell-${Date.now()}`,
+        trigger: upTrigger,
+        offerType: upOfferType,
+        selectedProduct: upOfferType === "productos_especificos" ? upProduct : "Catálogo Completo PDF",
+        copy: upCopy,
+        attachment: upAttachment,
+        active: upActive,
+        createdAt: "Ahora",
+      };
+      setUpsells((prev) => [newUp, ...prev]);
+      showToast("¡Nuevo Upsell creado y guardado!");
+    }
+    setIsCreatingUpsell(false);
+  };
+
+  // Prender o Apagar Upsell individual
+  const handleToggleUpsellActive = (upsellId: string) => {
+    setUpsells((prev) =>
+      prev.map((u) => (u.id === upsellId ? { ...u, active: !u.active } : u))
+    );
+    showToast("Estado del Upsell actualizado");
+  };
+
+  // Cargar Upsell para edición
+  const handleEditUpsell = (item: UpsellItem) => {
+    setEditingUpsellId(item.id);
+    setUpTrigger(item.trigger);
+    setUpOfferType(item.offerType);
+    setUpProduct(item.selectedProduct || "Pack Bóxers Microfibra Dry-Fit (x6)");
+    setUpCopy(item.copy);
+    setUpAttachment(item.attachment);
+    setUpActive(item.active);
+    setIsCreatingUpsell(true);
+  };
+
+  // Eliminar Upsell
+  const handleDeleteUpsell = (upsellId: string) => {
+    setUpsells((prev) => prev.filter((u) => u.id !== upsellId));
+    showToast("Upsell eliminado");
+  };
+
+  // Prender o Apagar Flujo en Rompe-Vistos
+  const handleToggleFlowActive = (flowId: string) => {
+    setSavedRompeVistos((prev) =>
+      prev.map((f) => (f.id === flowId ? { ...f, active: !f.active } : f))
+    );
+    showToast("Estado del flujo de rompevistos actualizado");
+  };
+
+  // Notificación tipo toast
   const [statusToast, setStatusToast] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setStatusToast(msg);
@@ -426,11 +553,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     "¡Hola! 👋 Qué bueno que nos escribes desde nuestro anuncio. Te comparto las promociones exclusivas en medias de bambú disponibles hoy con envío contraentrega:"
   );
 
-  // Estado Upsells
-  const [upsellCopy, setUpsellCopy] = useState(
-    "¡Excelente [Nombre]! Ya guardamos tu pedido. 🎉 Por confirmar ahora, puedes añadir un Pack de 3 pares de Medias Bamboo con 40% OFF por solo S/ 29 adicionales. ¿Deseas agregarlo a tu paquete?"
-  );
-
   // Estado Notificaciones
   const [testSent, setTestSent] = useState(false);
 
@@ -439,7 +561,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setSimulatorOpen(true);
   };
 
-  // Inserción de variables dinámicas al final del texto
   const insertVariableIntoText = (
     currentText: string,
     variableName: string,
@@ -479,7 +600,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     );
   };
 
-  // Toggle de multimedia adjunta
+  // Toggle de multimedia adjunta en Rompe-Vistos
   const handleToggleAttachment = (
     stepId: string,
     type: "imagen" | "video" | "audio"
@@ -499,6 +620,22 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
         return { ...s, attachment: { type, name: sampleFiles[type] } };
       })
     );
+  };
+
+  // Toggle de multimedia adjunta en Upsells
+  const handleToggleUpsellAttachment = (type: "imagen" | "video" | "audio" | "pdf") => {
+    const sampleFiles = {
+      imagen: "foto_combo_upsell.jpg",
+      video: "video_upsell_oferta.mp4",
+      audio: "nota_voz_oferta.ogg",
+      pdf: "catalogo_pedidoflow_2026.pdf",
+    };
+
+    if (upAttachment?.type === type) {
+      setUpAttachment(null);
+    } else {
+      setUpAttachment({ type, name: sampleFiles[type] });
+    }
   };
 
   // Agregar otro flujo / paso de recordatorio
@@ -537,7 +674,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     setOpenOrigen(true);
   };
 
-  // Guardar y Activar Flujo (Nuevo o Actualizado), ordenado por tiempo de envío
+  // Guardar y Activar Flujo (Nuevo o Actualizado)
   const handleSaveAndActivate = () => {
     const sortedSteps = [...currentRvSteps].sort(
       (a, b) => getStepSeconds(a) - getStepSeconds(b)
@@ -578,7 +715,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
     }
 
     setIsCreatingNewFlow(false);
-    // Mantener las tarjetas NO desplegadas (como en la Imagen 2)
     setExpandedProducts({});
   };
 
@@ -837,10 +973,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                           <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                             <span>
                               Tienes {savedRompeVistos.length}{" "}
-                              {savedRompeVistos.length === 1 ? "flujo de rompevistos activo" : "flujos de rompevistos activos"}
+                              {savedRompeVistos.length === 1 ? "flujo de rompevistos configurado" : "flujos de rompevistos configurados"}
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
-                              🟢 Activo
+                              {savedRompeVistos.filter((f) => f.active).length} Prendidos
                             </span>
                           </h3>
                           <p className="text-xs text-muted-foreground mt-0.5">
@@ -861,10 +997,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </button>
                     </div>
 
-                    {/* BARRA DE FILTROS: BOTONES DE SHOPIFY, WHATSAPP Y LOGÍSTICA + CONTRAENTREGA/SHALOM + FILTRO POR ETAPA */}
+                    {/* BARRA DE FILTROS */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-4 space-y-3.5 shadow-xs">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                        {/* 1. BOTONES DE CANAL: WHATSAPP, SHOPIFY, LOGÍSTICA */}
+                        {/* 1. BOTONES DE CANAL */}
                         <div className="space-y-1">
                           <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
                             Canal de Captación:
@@ -996,7 +1132,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     </div>
 
-                    {/* LISTADO DE PRODUCTOS (TARJETAS COLAPSADAS POR DEFECTO COMO EN IMAGEN 2) */}
+                    {/* LISTADO DE PRODUCTOS */}
                     {sortedProductEntries.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
                         <Filter className="h-8 w-8 text-muted-foreground mx-auto" />
@@ -1036,7 +1172,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                     <div className="flex flex-wrap items-center gap-2">
                                       <h4 className="text-sm font-bold text-foreground">{prodName}</h4>
                                       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2.5 py-0.5 text-xs font-bold">
-                                        Este producto tiene {flows.length} {flows.length === 1 ? "flujo de rompevistos" : "flujos de rompevistos"}
+                                        {flows.length} {flows.length === 1 ? "flujo" : "flujos"} ({flows.filter((f) => f.active).length} prendidos)
                                       </span>
                                     </div>
                                     <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -1092,6 +1228,24 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                                 <span className="text-[10px] text-muted-foreground">
                                                   {flow.steps.length} {flow.steps.length === 1 ? "mensaje" : "mensajes"}
                                                 </span>
+
+                                                {/* BOTÓN PRENDIDO / APAGADO EN ROMPE-VISTOS */}
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleFlowActive(flow.id);
+                                                  }}
+                                                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition border ${
+                                                    flow.active
+                                                      ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                                      : "bg-muted text-muted-foreground border-border"
+                                                  }`}
+                                                  title={flow.active ? "Flujo prendido (activo). Clic para apagar" : "Flujo apagado (pausado). Clic para prender"}
+                                                >
+                                                  <span className={`h-2 w-2 rounded-full ${flow.active ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                                                  <span>{flow.active ? "Prendido" : "Apagado"}</span>
+                                                </button>
                                               </div>
 
                                               <div className="flex items-center gap-2">
@@ -1128,7 +1282,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                               </div>
                                             </div>
 
-                                            {/* Mensajes ordenados cronológicamente por tiempo de envío */}
+                                            {/* Mensajes ordenados cronológicamente */}
                                             <div className="space-y-2">
                                               {[...flow.steps]
                                                 .sort((a, b) => getStepSeconds(a) - getStepSeconds(b))
@@ -1192,6 +1346,24 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                                 <span className="text-[10px] text-muted-foreground">
                                                   {flow.steps.length} {flow.steps.length === 1 ? "mensaje" : "mensajes"}
                                                 </span>
+
+                                                {/* BOTÓN PRENDIDO / APAGADO */}
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleToggleFlowActive(flow.id);
+                                                  }}
+                                                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition border ${
+                                                    flow.active
+                                                      ? "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/30"
+                                                      : "bg-muted text-muted-foreground border-border"
+                                                  }`}
+                                                  title={flow.active ? "Flujo prendido (activo). Clic para apagar" : "Flujo apagado (pausado). Clic para prender"}
+                                                >
+                                                  <span className={`h-2 w-2 rounded-full ${flow.active ? "bg-sky-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                                                  <span>{flow.active ? "Prendido" : "Apagado"}</span>
+                                                </button>
                                               </div>
 
                                               <div className="flex items-center gap-2">
@@ -1317,7 +1489,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     )}
 
-                    {/* BOTÓN VOLVER SI YA TIENE OTROS FLUJOS Y NO ESTÁ EDITANDO */}
                     {!editingFlowId && savedRompeVistos.length > 0 && (
                       <button
                         onClick={() => setIsCreatingNewFlow(false)}
@@ -1328,7 +1499,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </button>
                     )}
 
-                    {/* TEXTO INTERACTIVO DE PRIMERA VEZ */}
                     {savedRompeVistos.length === 0 && (
                       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center space-y-2 mb-2">
                         <div className="h-12 w-12 rounded-2xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center mx-auto mb-1">
@@ -1343,7 +1513,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     )}
 
-                    {/* PASO 1: SELECCIONAR PRODUCTO CON LA 4TA OPCIÓN "ELEGIR OTRO PRODUCTO" */}
+                    {/* PASO 1: SELECCIONAR PRODUCTO */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso1(!openPaso1)}
@@ -1371,7 +1541,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             Elige a qué producto o combo de tu catálogo aplicará esta regla de recuperación:
                           </p>
 
-                          {/* 4 OPCIONES PRINCIPALES */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
                             {[
                               "Medias Bamboo (Pack 3x / 6x)",
@@ -1396,7 +1565,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                               </button>
                             ))}
 
-                            {/* 4TA OPCIÓN: ELEGIR OTRO PRODUCTO */}
                             <button
                               type="button"
                               onClick={() => setShowExtendedCatalog(!showExtendedCatalog)}
@@ -1418,7 +1586,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             </button>
                           </div>
 
-                          {/* LISTA DESPLEGABLE DE MÁS PRODUCTOS */}
                           {showExtendedCatalog && (
                             <div className="rounded-xl border border-border bg-surface p-3.5 space-y-2.5 animate-in fade-in">
                               <div className="flex items-center justify-between">
@@ -1477,7 +1644,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* PASO 2: SELECCIONAR CONTRAENTREGA O AGENCIA (COLAPSABLE) */}
+                    {/* PASO 2: SELECCIONAR CONTRAENTREGA O AGENCIA */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso2(!openPaso2)}
@@ -1555,7 +1722,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* PASO 3: MÉTODO DE CREACIÓN (COLAPSABLE) */}
+                    {/* PASO 3: MÉTODO DE CREACIÓN */}
                     <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                       <div
                         onClick={() => setOpenPaso3(!openPaso3)}
@@ -1582,9 +1749,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl pt-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setRvCreationMode("manual");
-                              }}
+                              onClick={() => setRvCreationMode("manual")}
                               className={`flex items-center gap-3 rounded-xl border p-3.5 text-left transition ${
                                 rvCreationMode === "manual"
                                   ? "border-primary bg-primary/10 text-primary ring-1 ring-primary/30"
@@ -1631,7 +1796,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* LOADER CUANDO GENERA CON IAFLOW */}
+                    {/* LOADER IA */}
                     {rvGeneratingIa && (
                       <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-center space-y-2 animate-in fade-in">
                         <Wand2 className="h-6 w-6 text-emerald-500 animate-spin mx-auto" />
@@ -1641,10 +1806,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       </div>
                     )}
 
-                    {/* LISTA DE PASOS / MENSAJES (MANUAL O GENERADOS POR IA) */}
+                    {/* MENSAJES MANUAL/IA */}
                     {(rvCreationMode === "manual" || (rvCreationMode === "ia" && !rvGeneratingIa)) && (
                       <div className="space-y-4 animate-in fade-in">
-                        {/* ORIGEN DE CAPTACIÓN & ETAPAS DINÁMICAS (COLAPSABLE) */}
+                        {/* ORIGEN DE CAPTACIÓN */}
                         <div className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs">
                           <div
                             onClick={() => setOpenOrigen(!openOrigen)}
@@ -1671,7 +1836,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                 Selecciona desde qué canal se capturará el lead:
                               </p>
 
-                              {/* Botones para seleccionar WhatsApp, Shopify o Logística */}
                               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 {[
                                   { id: "whatsapp" as const, label: "💬 WhatsApp", desc: "Chats directos y anuncios CTWA" },
@@ -1701,10 +1865,9 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                                 })}
                               </div>
 
-                              {/* Selector de Etapa Dinámica */}
                               <div className="pt-2 border-t border-border/50">
                                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                                  Etapa a monitorear ({rvSourceChannel === "whatsapp" ? "WhatsApp" : rvSourceChannel === "shopify" ? "Shopify" : "Logística"}):
+                                  Etapa a monitorear:
                                 </label>
                                 <select
                                   value={rvMonitoredStage}
@@ -1722,188 +1885,182 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                           )}
                         </div>
 
-                        {/* RECORRIDO DE CADA PASO / MENSAJE */}
+                        {/* RECORRIDO DE PASOS */}
                         <div className="space-y-4">
-                          {currentRvSteps.map((step, idx) => {
-                            return (
-                              <div
-                                key={step.id}
-                                className="rounded-2xl border border-border bg-surface p-4 space-y-3.5 shadow-xs"
-                              >
-                                <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
-                                  <span className="text-xs font-bold text-foreground flex items-center gap-2">
-                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px]">
-                                      {idx + 1}
-                                    </span>
-                                    Mensaje de Recuperación #{idx + 1}
+                          {currentRvSteps.map((step, idx) => (
+                            <div
+                              key={step.id}
+                              className="rounded-2xl border border-border bg-surface p-4 space-y-3.5 shadow-xs"
+                            >
+                              <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+                                <span className="text-xs font-bold text-foreground flex items-center gap-2">
+                                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[10px]">
+                                    {idx + 1}
                                   </span>
+                                  Mensaje de Recuperación #{idx + 1}
+                                </span>
 
-                                  <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => openSim(step.copy)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                  >
+                                    <Smartphone className="h-3 w-3" /> Simular
+                                  </button>
+                                  {currentRvSteps.length > 1 && (
                                     <button
                                       type="button"
-                                      onClick={() => openSim(step.copy)}
-                                      className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                                      onClick={() => handleRemoveStep(step.id)}
+                                      className="text-muted-foreground hover:text-rose-500 p-1"
+                                      title="Eliminar este mensaje"
                                     >
-                                      <Smartphone className="h-3 w-3" /> Simular
+                                      <Trash2 className="h-3.5 w-3.5" />
                                     </button>
-                                    {currentRvSteps.length > 1 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleRemoveStep(step.id)}
-                                        className="text-muted-foreground hover:text-rose-500 p-1"
-                                        title="Eliminar este mensaje"
-                                      >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
-
-                                {/* TIEMPO FLEXIBLE LIMPIO */}
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                                  <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
-                                    <label className="block font-bold text-foreground">Enviar si permanece:</label>
-                                    <div className="flex items-center gap-1.5">
-                                      <input
-                                        type="text"
-                                        inputMode="numeric"
-                                        value={step.waitValue}
-                                        onChange={(e) =>
-                                          handleStepWaitValueChange(step.id, e.target.value, step.waitUnit)
-                                        }
-                                        className="h-9 w-20 rounded-lg border border-border bg-surface text-center text-sm font-bold text-foreground outline-none focus:border-primary"
-                                      />
-                                      <select
-                                        value={step.waitUnit}
-                                        onChange={(e) =>
-                                          handleStepWaitUnitChange(
-                                            step.id,
-                                            e.target.value as "segundos" | "minutos" | "horas"
-                                          )
-                                        }
-                                        className="h-9 flex-1 rounded-lg border border-border bg-surface px-2 text-xs font-bold text-foreground outline-none focus:border-primary"
-                                      >
-                                        <option value="segundos">Segundos</option>
-                                        <option value="minutos">Minutos</option>
-                                        <option value="horas">Horas</option>
-                                      </select>
-                                    </div>
-                                  </div>
-
-                                  <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
-                                    <label className="block font-bold text-foreground">Condición:</label>
-                                    <select
-                                      value={step.condition}
-                                      onChange={(e) => {
-                                        const val = e.target.value as any;
-                                        setCurrentRvSteps((prev) =>
-                                          prev.map((s) => (s.id === step.id ? { ...s, condition: val } : s))
-                                        );
-                                      }}
-                                      className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold outline-none focus:border-primary"
-                                    >
-                                      <option value="visto">👀 Leyó mensaje (Doble check azul)</option>
-                                      <option value="no_visto">⏳ No abrió el chat</option>
-                                      <option value="cualquiera">Cualquiera sin responder</option>
-                                    </select>
-                                  </div>
-
-                                  <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
-                                    <label className="block font-bold text-foreground">Cupón opcional:</label>
-                                    <input
-                                      value={step.coupon}
-                                      onChange={(e) => {
-                                        const val = e.target.value;
-                                        setCurrentRvSteps((prev) =>
-                                          prev.map((s) => (s.id === step.id ? { ...s, coupon: val } : s))
-                                        );
-                                      }}
-                                      className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-bold text-emerald-500 outline-none focus:border-primary uppercase"
-                                    />
-                                  </div>
-                                </div>
-
-                                {/* MENSAJE DE RECUPERACIÓN */}
-                                <div>
-                                  <label className="block font-semibold text-muted-foreground text-xs mb-1">
-                                    Mensaje de WhatsApp:
-                                  </label>
-                                  <textarea
-                                    rows={3}
-                                    value={step.copy}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setCurrentRvSteps((prev) =>
-                                        prev.map((s) => (s.id === step.id ? { ...s, copy: val } : s))
-                                      );
-                                    }}
-                                    className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary leading-relaxed"
-                                  />
-                                </div>
-
-                                {/* BOTONES MULTIMEDIA ABAJO DEL MENSAJE */}
-                                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-muted-foreground font-semibold mr-1">
-                                      Adjuntar multimedia:
-                                    </span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttachment(step.id, "imagen")}
-                                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
-                                        step.attachment?.type === "imagen"
-                                          ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
-                                          : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
-                                      }`}
-                                    >
-                                      <Image className="h-3.5 w-3.5" />
-                                      Imagen
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttachment(step.id, "video")}
-                                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
-                                        step.attachment?.type === "video"
-                                          ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
-                                          : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
-                                      }`}
-                                    >
-                                      <Video className="h-3.5 w-3.5" />
-                                      Video
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleToggleAttachment(step.id, "audio")}
-                                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
-                                        step.attachment?.type === "audio"
-                                          ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
-                                          : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
-                                      }`}
-                                    >
-                                      <Mic className="h-3.5 w-3.5" />
-                                      Audio
-                                    </button>
-                                  </div>
-
-                                  {step.attachment && (
-                                    <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
-                                      <span>📎 {step.attachment.name}</span>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleToggleAttachment(step.id, step.attachment!.type)}
-                                        className="hover:text-rose-500"
-                                      >
-                                        <X className="h-3 w-3" />
-                                      </button>
-                                    </div>
                                   )}
                                 </div>
                               </div>
-                            );
-                          })}
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
+                                  <label className="block font-bold text-foreground">Enviar si permanece:</label>
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={step.waitValue}
+                                      onChange={(e) =>
+                                        handleStepWaitValueChange(step.id, e.target.value, step.waitUnit)
+                                      }
+                                      className="h-9 w-20 rounded-lg border border-border bg-surface text-center text-sm font-bold text-foreground outline-none focus:border-primary"
+                                    />
+                                    <select
+                                      value={step.waitUnit}
+                                      onChange={(e) =>
+                                        handleStepWaitUnitChange(
+                                          step.id,
+                                          e.target.value as "segundos" | "minutos" | "horas"
+                                        )
+                                      }
+                                      className="h-9 flex-1 rounded-lg border border-border bg-surface px-2 text-xs font-bold text-foreground outline-none focus:border-primary"
+                                    >
+                                      <option value="segundos">Segundos</option>
+                                      <option value="minutos">Minutos</option>
+                                      <option value="horas">Horas</option>
+                                    </select>
+                                  </div>
+                                </div>
+
+                                <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
+                                  <label className="block font-bold text-foreground">Condición:</label>
+                                  <select
+                                    value={step.condition}
+                                    onChange={(e) => {
+                                      const val = e.target.value as any;
+                                      setCurrentRvSteps((prev) =>
+                                        prev.map((s) => (s.id === step.id ? { ...s, condition: val } : s))
+                                      );
+                                    }}
+                                    className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-semibold outline-none focus:border-primary"
+                                  >
+                                    <option value="visto">👀 Leyó mensaje (Doble check azul)</option>
+                                    <option value="no_visto">⏳ No abrió el chat</option>
+                                    <option value="cualquiera">Cualquiera sin responder</option>
+                                  </select>
+                                </div>
+
+                                <div className="rounded-xl border border-border bg-surface-2 p-2.5 space-y-1">
+                                  <label className="block font-bold text-foreground">Cupón opcional:</label>
+                                  <input
+                                    value={step.coupon}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setCurrentRvSteps((prev) =>
+                                        prev.map((s) => (s.id === step.id ? { ...s, coupon: val } : s))
+                                      );
+                                    }}
+                                    className="w-full h-9 rounded-lg border border-border bg-surface px-2 text-xs font-bold text-emerald-500 outline-none focus:border-primary uppercase"
+                                  />
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block font-semibold text-muted-foreground text-xs mb-1">
+                                  Mensaje de WhatsApp:
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  value={step.copy}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setCurrentRvSteps((prev) =>
+                                      prev.map((s) => (s.id === step.id ? { ...s, copy: val } : s))
+                                    );
+                                  }}
+                                  className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary leading-relaxed"
+                                />
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/50 text-xs">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-muted-foreground font-semibold mr-1">
+                                    Adjuntar multimedia:
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttachment(step.id, "imagen")}
+                                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
+                                      step.attachment?.type === "imagen"
+                                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                                        : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    <Image className="h-3.5 w-3.5" />
+                                    Imagen
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttachment(step.id, "video")}
+                                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
+                                      step.attachment?.type === "video"
+                                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                                        : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    <Video className="h-3.5 w-3.5" />
+                                    Video
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleAttachment(step.id, "audio")}
+                                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold border transition ${
+                                      step.attachment?.type === "audio"
+                                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                                        : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                                    }`}
+                                  >
+                                    <Mic className="h-3.5 w-3.5" />
+                                    Audio
+                                  </button>
+                                </div>
+
+                                {step.attachment && (
+                                  <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
+                                    <span>📎 {step.attachment.name}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleToggleAttachment(step.id, step.attachment!.type)}
+                                      className="hover:text-rose-500"
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
 
-                        {/* BOTONES DE ACCIÓN: AGREGAR OTRO FLUJO Y GUARDAR/ACTUALIZAR ABAJO */}
                         <div className="pt-2 space-y-3">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <button
@@ -1916,12 +2073,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             </button>
 
                             <span className="text-xs text-muted-foreground">
-                              {currentRvSteps.length}{" "}
-                              {currentRvSteps.length === 1 ? "mensaje configurado" : "mensajes configurados en secuencia"}
+                              {currentRvSteps.length} {currentRvSteps.length === 1 ? "mensaje configurado" : "mensajes en secuencia"}
                             </span>
                           </div>
 
-                          {/* BOTÓN DE ACTIVAR / ACTUALIZAR ABAJO */}
                           <div className="pt-3 border-t border-border flex justify-end">
                             <button
                               type="button"
@@ -2013,11 +2168,10 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
             )}
 
             {/* ========================================================================= */}
-            {/* 3. CONFIRMACIÓN Y LOGÍSTICA (NUEVAS OPCIONES COMPLETAS)                  */}
+            {/* 3. CONFIRMACIÓN Y LOGÍSTICA                                              */}
             {/* ========================================================================= */}
             {selectedTab === "confirmacion_logistica" && (
               <div className="space-y-6 animate-in fade-in">
-                {/* Cabecera del Módulo con selector de Sub-Pestaña */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
                   <div>
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
@@ -2029,7 +2183,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                     </p>
                   </div>
 
-                  {/* Sub-Pestañas: 1. Confirmaciones vs 2. Logística */}
                   <div className="flex items-center rounded-xl bg-surface-2 p-1 border border-border self-start sm:self-auto">
                     <button
                       onClick={() => setConfLogSubTab("confirmaciones")}
@@ -2056,7 +2209,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   </div>
                 </div>
 
-                {/* AVISO DE RECOMENDACIÓN PARA ECOMMERCE PERÚ */}
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-3 text-xs">
                   <Sparkles className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
                   <div className="space-y-1">
@@ -2069,10 +2221,9 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   </div>
                 </div>
 
-                {/* SUB-PESTAÑA 1: CONFIRMACIONES */}
                 {confLogSubTab === "confirmaciones" && (
                   <div className="space-y-6">
-                    {/* MENSAJE 1.1: MENSAJE DE CONFIRMACIÓN */}
+                    {/* MENSAJE 1.1 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2124,7 +2275,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </div>
                       </div>
 
-                      {/* SWITCH DE LAS 2 OPCIONES: CREAR NUEVA vs YA TENGO MI PLANTILLA */}
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
@@ -2152,7 +2302,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </button>
                       </div>
 
-                      {/* CONTENIDO SEGÚN LA OPCIÓN SELECCIONADA */}
                       {confMsgRegular.mode === "nueva" ? (
                         <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
                           <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
@@ -2168,7 +2317,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
                           />
 
-                          {/* Chips para insertar variables en 1 clic */}
                           <div className="space-y-1.5">
                             <span className="text-[11px] font-semibold text-muted-foreground block">
                               Insertar variables disponibles:
@@ -2214,7 +2362,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                           </div>
                         </div>
                       ) : (
-                        /* OPCIÓN: YA TENGO MI PLANTILLA */
                         <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
                           <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
                             Seleccionar Plantilla Registrada de Meta:
@@ -2236,7 +2383,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                               ))}
                           </select>
 
-                          {/* Vista previa de la plantilla existente */}
                           {(() => {
                             const found = mockTemplates.find(
                               (t) => t.id === confMsgRegular.selectedTemplateId
@@ -2278,7 +2424,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* MENSAJE 1.2: MENSAJE PARA PEDIDOS PRELIMINARES */}
+                    {/* MENSAJE 1.2 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2330,7 +2476,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </div>
                       </div>
 
-                      {/* SWITCH DE LAS 2 OPCIONES */}
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
@@ -2373,7 +2518,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
                           />
 
-                          {/* Variables */}
                           <div className="space-y-1.5">
                             <span className="text-[11px] font-semibold text-muted-foreground block">
                               Insertar variables disponibles:
@@ -2479,10 +2623,9 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                   </div>
                 )}
 
-                {/* SUB-PESTAÑA 2: LOGÍSTICA */}
                 {confLogSubTab === "logistica" && (
                   <div className="space-y-6">
-                    {/* MENSAJE 2.1: PEDIDO ENVIADO POR AGENCIA */}
+                    {/* MENSAJE 2.1 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2534,7 +2677,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </div>
                       </div>
 
-                      {/* SWITCH DE LAS 2 OPCIONES */}
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
@@ -2577,7 +2719,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
                           />
 
-                          {/* Variables */}
                           <div className="space-y-1.5">
                             <span className="text-[11px] font-semibold text-muted-foreground block">
                               Insertar variables disponibles:
@@ -2677,7 +2818,7 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                       )}
                     </div>
 
-                    {/* MENSAJE 2.2: EL PEDIDO LLEGÓ A LA AGENCIA */}
+                    {/* MENSAJE 2.2 */}
                     <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
                         <div>
@@ -2729,7 +2870,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                         </div>
                       </div>
 
-                      {/* SWITCH DE LAS 2 OPCIONES */}
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
@@ -2772,7 +2912,6 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
                             className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
                           />
 
-                          {/* Variables */}
                           <div className="space-y-1.5">
                             <span className="text-[11px] font-semibold text-muted-foreground block">
                               Insertar variables disponibles:
@@ -2877,30 +3016,445 @@ Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
             )}
 
             {/* ========================================================================= */}
-            {/* 4. UPSELLS                                                               */}
+            {/* 4. UPSELLS (VENTA CRUZADA) - CON BOTÓN CREAR UPSELL PRIMERO               */}
             {/* ========================================================================= */}
             {selectedTab === "upsells" && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="space-y-6 animate-in fade-in">
+                {/* CABECERA CON BOTÓN "CREAR UPSELL" PRIMERO Y DESTACADO */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
                   <div>
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                       <TrendingUp className="h-5 w-5 text-emerald-500" />
-                      Upsells (Venta Cruzada)
+                      Upsells (Venta Cruzada y Aumento de Ticket)
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Ventas adicionales automáticas post confirmación (+1 min) o post entrega (+3 min).
+                      Ofrece promociones en los momentos de mayor interés del cliente (post-confirmación o post-entrega).
                     </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    {/* BOTÓN CREAR UPSELL DESTACADO */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingUpsellId(null);
+                        setIsCreatingUpsell(true);
+                      }}
+                      className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                      CREAR UPSELL
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveTutorial("upsells")}
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-500/15 px-3 py-2 text-xs font-bold text-emerald-500 hover:bg-emerald-500 hover:text-white transition"
+                    >
+                      <Play className="h-3 w-3 fill-current" />
+                      Ver Tutorial
+                    </button>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-3">
-                  <label className="block text-xs font-bold text-foreground uppercase">Mensaje de Oferta:</label>
-                  <textarea
-                    rows={3}
-                    value={upsellCopy}
-                    onChange={(e) => setUpsellCopy(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-surface p-3 text-xs text-foreground outline-none focus:border-primary"
-                  />
+                {/* FORMULARIO CREADOR / EDITOR DE UPSELL */}
+                {isCreatingUpsell ? (
+                  <div className="rounded-2xl border-2 border-emerald-500/40 bg-surface p-5 sm:p-6 space-y-5 shadow-md animate-in fade-in">
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-9 w-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
+                          <TrendingUp className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-foreground">
+                            {editingUpsellId ? "Modificar Configuración de Upsell" : "Configurar Nuevo Upsell Automático"}
+                          </h3>
+                          <p className="text-[11px] text-muted-foreground">
+                            Define el momento de disparo, la oferta, el mensaje y si estará prendido o apagado.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingUpsell(false);
+                          setEditingUpsellId(null);
+                        }}
+                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* 1. SE DISPARA CUANDO */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                        1. Se dispara cuando:
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setUpTrigger("post_confirmacion")}
+                          className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
+                            upTrigger === "post_confirmacion"
+                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30"
+                              : "border-border bg-surface-2 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Zap className="h-5 w-5 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold">Post-confirmación</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                              Se envía 1 minuto después de que el cliente confirmó su pedido contraentrega (se añade al mismo paquete).
+                            </p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setUpTrigger("post_entrega")}
+                          className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
+                            upTrigger === "post_entrega"
+                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30"
+                              : "border-border bg-surface-2 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Truck className="h-5 w-5 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold">Post-entrega</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                              Se envía 3 minutos después de que la agencia o repartidor marca "Entregado" para incentivar una segunda compra.
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 2. OFRECER */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                        2. Ofrecer:
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setUpOfferType("catalogo_pdf")}
+                          className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
+                            upOfferType === "catalogo_pdf"
+                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30"
+                              : "border-border bg-surface-2 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <FileText className="h-5 w-5 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold">Todo el catálogo (PDF)</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                              Envía un archivo PDF interactivo con todos los productos y promociones del mes.
+                            </p>
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setUpOfferType("productos_especificos")}
+                          className={`flex items-start gap-3 rounded-xl border p-3.5 text-left transition ${
+                            upOfferType === "productos_especificos"
+                              ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30"
+                              : "border-border bg-surface-2 text-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <ShoppingBag className="h-5 w-5 shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-xs font-bold">Productos específicos</p>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                              Selecciona un producto complementario de tu inventario a precio con descuento especial.
+                            </p>
+                          </div>
+                        </button>
+                      </div>
+
+                      {/* Selector si es producto específico */}
+                      {upOfferType === "productos_especificos" && (
+                        <div className="pt-2">
+                          <label className="block text-[11px] font-bold text-muted-foreground mb-1">
+                            Seleccionar producto para la oferta especial:
+                          </label>
+                          <select
+                            value={upProduct}
+                            onChange={(e) => setUpProduct(e.target.value)}
+                            className="w-full h-10 rounded-xl border border-border bg-surface-2 px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                          >
+                            {extendedCatalogList.map((p) => (
+                              <option key={p} value={p}>
+                                {p}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. VENTANA PARA ESCRIBIR EL MENSAJE */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                        3. Mensaje de WhatsApp (Copy de Venta):
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={upCopy}
+                        onChange={(e) => setUpCopy(e.target.value)}
+                        placeholder="Escribe el mensaje persuasivo del Upsell..."
+                        className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary leading-relaxed"
+                      />
+
+                      {/* Chips de variables */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[11px] font-semibold text-muted-foreground mr-1">
+                          Variables:
+                        </span>
+                        {["Nombre", "Producto", "Monto", "Cupón", "Enlace"].map((v) => (
+                          <button
+                            key={v}
+                            type="button"
+                            onClick={() =>
+                              insertVariableIntoText(upCopy, v, (val) => setUpCopy(val))
+                            }
+                            className="rounded-lg border border-border bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-foreground hover:border-emerald-500 hover:text-emerald-500 transition"
+                          >
+                            + [{v}]
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 4. ABAJO AGREGAR IMAGEN, VIDEO O VOZ */}
+                    <div className="space-y-2 pt-2 border-t border-border">
+                      <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                        4. Adjuntar Contenido Multimedia:
+                      </label>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleUpsellAttachment("imagen")}
+                          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                            upAttachment?.type === "imagen"
+                              ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                              : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Image className="h-4 w-4" />
+                          Imagen
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleUpsellAttachment("video")}
+                          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                            upAttachment?.type === "video"
+                              ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                              : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Video className="h-4 w-4" />
+                          Video
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleUpsellAttachment("audio")}
+                          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                            upAttachment?.type === "audio"
+                              ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                              : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <Mic className="h-4 w-4" />
+                          Voz / Audio
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleUpsellAttachment("pdf")}
+                          className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition ${
+                            upAttachment?.type === "pdf"
+                              ? "border-emerald-500 bg-emerald-500/15 text-emerald-500"
+                              : "border-border bg-surface-2 text-muted-foreground hover:bg-muted"
+                          }`}
+                        >
+                          <FileText className="h-4 w-4" />
+                          Catálogo PDF
+                        </button>
+                      </div>
+
+                      {upAttachment && (
+                        <div className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-3 py-1 text-xs font-medium text-emerald-500 mt-2">
+                          <span>📎 Archivo adjunto: {upAttachment.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => setUpAttachment(null)}
+                            className="hover:text-rose-500"
+                            title="Quitar archivo"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 5. BOTÓN DE APAGADO Y PRENDIDO (SWITCH INTERACTIVO) */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border">
+                      <div className="space-y-0.5">
+                        <label className="text-xs font-bold text-foreground block">
+                          Estado del Upsell:
+                        </label>
+                        <p className="text-[11px] text-muted-foreground">
+                          Define si este upsell empezará a enviarse de inmediato o quedará en pausa.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setUpActive(!upActive)}
+                        className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition shadow-xs border ${
+                          upActive
+                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/40 ring-2 ring-emerald-500/20"
+                            : "bg-muted text-muted-foreground border-border"
+                        }`}
+                      >
+                        <span className={`h-2.5 w-2.5 rounded-full ${upActive ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                        <span>{upActive ? "🟢 Prendido (Activo)" : "⚪ Apagado (Pausado)"}</span>
+                      </button>
+                    </div>
+
+                    {/* ACCIONES DEL FORMULARIO */}
+                    <div className="pt-4 border-t border-border flex flex-wrap items-center justify-end gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => openSim(upCopy)}
+                        className="rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-bold text-emerald-500 hover:bg-muted transition inline-flex items-center gap-1.5"
+                      >
+                        <Smartphone className="h-4 w-4" />
+                        Simular en WhatsApp
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCreatingUpsell(false);
+                          setEditingUpsellId(null);
+                        }}
+                        className="rounded-xl border border-border bg-surface px-4 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted"
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSaveUpsell}
+                        className="rounded-xl bg-emerald-600 px-6 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md inline-flex items-center gap-2"
+                      >
+                        <Check className="h-4 w-4" />
+                        {editingUpsellId ? "Actualizar Upsell" : "Guardar y Activar Upsell"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* LISTADO DE UPSELLS CREADOS */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      Upsells Configurados ({upsells.length})
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {upsells.filter((u) => u.active).length} activos de {upsells.length}
+                    </span>
+                  </div>
+
+                  {upsells.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
+                      <TrendingUp className="h-8 w-8 text-muted-foreground mx-auto" />
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        Aún no tienes ningún Upsell configurado. Haz clic en "CREAR UPSELL" para empezar.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {upsells.map((up) => (
+                        <div
+                          key={up.id}
+                          className="rounded-2xl border border-border bg-surface-2 p-5 space-y-3.5 shadow-xs transition hover:border-emerald-500/40 flex flex-col justify-between"
+                        >
+                          <div className="space-y-3">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 text-emerald-500 px-2 py-0.5 text-[11px] font-bold">
+                                  {up.trigger === "post_confirmacion" ? "⚡ Post-confirmación" : "📦 Post-entrega"}
+                                </span>
+                                <span className="inline-flex items-center gap-1 rounded-md bg-surface text-muted-foreground border border-border px-2 py-0.5 text-[10px] font-semibold">
+                                  {up.offerType === "catalogo_pdf" ? "📄 Todo el catálogo (PDF)" : `🎯 ${up.selectedProduct}`}
+                                </span>
+                              </div>
+
+                              {/* BOTÓN PRENDIDO / APAGADO EN LA TARJETA */}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleUpsellActive(up.id)}
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold transition border ${
+                                  up.active
+                                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                    : "bg-muted text-muted-foreground border-border"
+                                }`}
+                                title={up.active ? "Upsell prendido (activo). Clic para apagar" : "Upsell apagado (pausado). Clic para prender"}
+                              >
+                                <span className={`h-2 w-2 rounded-full ${up.active ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground/40"}`} />
+                                <span>{up.active ? "Prendido" : "Apagado"}</span>
+                              </button>
+                            </div>
+
+                            <p className="text-xs text-foreground leading-relaxed bg-surface p-3 rounded-xl border border-border/70">
+                              {up.copy}
+                            </p>
+
+                            {up.attachment && (
+                              <div className="flex items-center gap-1.5 text-[11px] text-emerald-500 font-medium">
+                                <span>📎 Adjunto: {up.attachment.name} ({up.attachment.type.toUpperCase()})</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                            <span className="text-[10px] text-muted-foreground">
+                              {up.createdAt}
+                            </span>
+
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => openSim(up.copy)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-500 hover:underline"
+                              >
+                                <Smartphone className="h-3.5 w-3.5" /> Simular
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleEditUpsell(up)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-500 hover:underline"
+                              >
+                                <Pencil className="h-3.5 w-3.5" /> Editar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteUpsell(up.id)}
+                                className="text-muted-foreground hover:text-rose-500 p-1 transition"
+                                title="Eliminar Upsell"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
