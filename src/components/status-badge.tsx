@@ -1,10 +1,10 @@
-import { STATUS_STYLES, type OrderStatus } from "@/lib/mock-data";
+import { STATUS_STYLES, type OrderStatus, type DeliveryStatus } from "@/lib/mock-data";
 
 export function StatusBadge({
   status,
   size = "md",
 }: {
-  status: OrderStatus;
+  status: OrderStatus | DeliveryStatus | string;
   size?: "sm" | "md";
 }) {
   const s = STATUS_STYLES[status] || { label: status, badge: "bg-muted text-muted-foreground border-transparent", dot: "bg-muted", column: "" };
@@ -20,7 +20,7 @@ export function StatusBadge({
   );
 }
 
-export function StatusDot({ status }: { status: OrderStatus }) {
+export function StatusDot({ status }: { status: OrderStatus | DeliveryStatus | string }) {
   const s = STATUS_STYLES[status];
   return <span className={`h-2 w-2 shrink-0 rounded-full ${s ? s.dot : "bg-muted"}`} />;
 }
