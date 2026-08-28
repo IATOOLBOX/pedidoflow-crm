@@ -38,8 +38,13 @@ import {
   Search,
   Filter,
   Layers,
+  Link2,
+  FileText,
+  AlertCircle,
+  Copy,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { templates as mockTemplates, type Template } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/workflows")({
   head: () => ({
@@ -293,7 +298,7 @@ interface SavedRompeVistoFlow {
   steps: RompeVistoStepItem[];
   active: boolean;
   createdAt: string;
-  updatedAt: number; // timestamp para ordenar el último editado arriba
+  updatedAt: number;
 }
 
 const extendedCatalogList = [
@@ -308,6 +313,15 @@ const extendedCatalogList = [
   "Todos los productos del catálogo",
 ];
 
+// Estructura para configuración de cada mensaje en Confirmaciones y Logística
+interface FlowMessageConfig {
+  mode: "nueva" | "existente";
+  isLinked: boolean;
+  newTemplateText: string;
+  selectedTemplateId: string;
+  updatedAt?: string;
+}
+
 export function WorkflowsPage() {
   const [selectedTab, setSelectedTab] = useState<WorkflowTab | null>(null);
   const [activeTutorial, setActiveTutorial] = useState<WorkflowTab | null>(null);
@@ -316,40 +330,26 @@ export function WorkflowsPage() {
     "Hola Juan 👋 Recibimos tu pedido #PF-8821 por S/ 149.00 contraentrega. ¿Confirmas tu compra para enviártelo mañana?"
   );
 
-  // Flujos guardados
+  // Rompe-Vistos
   const [savedRompeVistos, setSavedRompeVistos] = useState<SavedRompeVistoFlow[]>([]);
   const [isCreatingNewFlow, setIsCreatingNewFlow] = useState<boolean>(true);
-
-  // Al guardar/iniciar, se mantienen TODAS las tarjetas cerradas (como en la Imagen 2)
   const [expandedProducts, setExpandedProducts] = useState<Record<string, boolean>>({});
-
-  // Modo edición de flujo existente
   const [editingFlowId, setEditingFlowId] = useState<string | null>(null);
-
-  // Filtros de visualización en flujos guardados
   const [filterChannel, setFilterChannel] = useState<"todos" | "whatsapp" | "shopify" | "logistica">("todos");
   const [filterShipping, setFilterShipping] = useState<"todos" | "contraentrega" | "agencia">("todos");
   const [filterStage, setFilterStage] = useState<string>("todos");
-
-  // Estados de acordeón colapsable para optimizar espacio en el creador
   const [openPaso1, setOpenPaso1] = useState<boolean>(true);
   const [openPaso2, setOpenPaso2] = useState<boolean>(true);
   const [openPaso3, setOpenPaso3] = useState<boolean>(true);
   const [openOrigen, setOpenOrigen] = useState<boolean>(true);
-
-  // Catálogo extendido en Paso 1
   const [showExtendedCatalog, setShowExtendedCatalog] = useState(false);
   const [productSearch, setProductSearch] = useState("");
-
-  // Formulario del flujo actual
   const [rvProduct, setRvProduct] = useState("Medias Bamboo (Pack 3x / 6x)");
   const [rvShippingType, setRvShippingType] = useState<"contraentrega" | "agencia">("contraentrega");
   const [rvCreationMode, setRvCreationMode] = useState<"manual" | "ia" | null>(null);
   const [rvGeneratingIa, setRvGeneratingIa] = useState(false);
   const [rvSourceChannel, setRvSourceChannel] = useState<"whatsapp" | "shopify" | "logistica">("whatsapp");
   const [rvMonitoredStage, setRvMonitoredStage] = useState<string>("wa_interaccion");
-
-  // Pasos configurados en el flujo actual
   const [currentRvSteps, setCurrentRvSteps] = useState<RompeVistoStepItem[]>([
     {
       id: "step-1",
@@ -362,16 +362,68 @@ export function WorkflowsPage() {
     },
   ]);
 
+  // ===========================================================================
+  // ESTADOS CONFIRMACIÓN Y LOGÍSTICA (4 MENSAJES CONFIGURABLES)
+  // ===========================================================================
+  const [confLogSubTab, setConfLogSubTab] = useState<"confirmaciones" | "logistica">("confirmaciones");
+
+  // 1. Confirmaciones: Mensaje de Confirmación Regular
+  const [confMsgRegular, setConfMsgRegular] = useState<FlowMessageConfig>({
+    mode: "nueva",
+    isLinked: true,
+    newTemplateText: `¡Hola [Nombre]! 
+🚚 Tu pedido ya está en camino: 
+📦 Productos: [Productos] 
+🏢 Agencia: [Agencia] 
+🔢 Número de guía: [Guía] 
+
+Puedes hacer seguimiento de tu pedido con el número de guía. ¡Gracias por tu compra!`,
+    selectedTemplateId: "t1",
+    updatedAt: "Guardado recientemente",
+  });
+
+  // 2. Confirmaciones: Mensaje para Pedidos Preliminares (Drafts / Carritos)
+  const [confMsgPreliminar, setConfMsgPreliminar] = useState<FlowMessageConfig>({
+    mode: "nueva",
+    isLinked: false,
+    newTemplateText: `Hola [Nombre] 👋 Notamos que dejaste un pedido preliminar de [Productos] en nuestra tienda por S/ [Monto]. 
+¿Deseas confirmar la entrega contraentrega para reservarte el stock hoy mismo? 📦 Responde SÍ para despachártelo hoy.`,
+    selectedTemplateId: "t2",
+  });
+
+  // 3. Logística: Pedido Enviado por Agencia (Despacho / Guía)
+  const [logMsgEnviado, setLogMsgEnviado] = useState<FlowMessageConfig>({
+    mode: "nueva",
+    isLinked: true,
+    newTemplateText: `¡Buenas noticias [Nombre]! 🚚 Tu pedido de [Productos] ya fue entregado a la agencia [Agencia].
+🔢 Número de Guía: [Guía]
+💰 Saldo a cancelar al recoger: S/ [Monto]
+Puedes hacer el seguimiento en la web de [Agencia] con tu número de guía.`,
+    selectedTemplateId: "t4",
+    updatedAt: "Guardado recientemente",
+  });
+
+  // 4. Logística: El Pedido Llegó a Agencia Destino
+  const [logMsgLlego, setLogMsgLlego] = useState<FlowMessageConfig>({
+    mode: "nueva",
+    isLinked: false,
+    newTemplateText: `¡Hola [Nombre]! 📦 Tu paquete ya llegó y está listo para ser retirado en la agencia [Agencia] de [Ciudad].
+🔢 Guía: [Guía]
+⚠️ Recuerda presentar tu DNI físico en ventanilla para retirar tu paquete. ¡Gracias por tu confianza!`,
+    selectedTemplateId: "t3",
+  });
+
+  // Notificación tipo toast al guardar/vincular
+  const [statusToast, setStatusToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setStatusToast(msg);
+    setTimeout(() => setStatusToast(null), 3000);
+  };
+
   // Estado Secuencia Inicial
   const [initialKeyword, setInitialKeyword] = useState("PROMO MEDIAS");
   const [initialResponseText, setInitialResponseText] = useState(
     "¡Hola! 👋 Qué bueno que nos escribes desde nuestro anuncio. Te comparto las promociones exclusivas en medias de bambú disponibles hoy con envío contraentrega:"
-  );
-
-  // Estado Confirmaciones y Logística
-  const [confLogSubTab, setConfLogSubTab] = useState<"confirmaciones" | "logistica">("confirmaciones");
-  const [confCopy, setConfCopy] = useState(
-    "Hola [Nombre del lead] 👋 Confirmamos tu pedido de [Productos Pedido] por [Valor Pedido]. La entrega será en [Dirección], [Distrito], [Departamento]. ¿Confirmas para preparar tu despacho hoy?"
   );
 
   // Estado Upsells
@@ -385,6 +437,16 @@ export function WorkflowsPage() {
   const openSim = (msg: string) => {
     setSimulatorMessage(msg);
     setSimulatorOpen(true);
+  };
+
+  // Inserción de variables dinámicas al final del texto
+  const insertVariableIntoText = (
+    currentText: string,
+    variableName: string,
+    setter: (val: string) => void
+  ) => {
+    const formatted = `[${variableName}]`;
+    setter(currentText ? `${currentText} ${formatted}` : formatted);
   };
 
   // Manejador de cambio de número de tiempo con límite estricto de cifras
@@ -555,7 +617,6 @@ export function WorkflowsPage() {
     if (filterChannel === "whatsapp") return channelStages.whatsapp;
     if (filterChannel === "shopify") return channelStages.shopify;
     if (filterChannel === "logistica") return channelStages.logistica;
-    // Si es "todos", consolidar las etapas únicas
     const all = [
       ...channelStages.whatsapp,
       ...channelStages.shopify.filter((s) => !channelStages.whatsapp.some((w) => w.value === s.value)),
@@ -598,7 +659,7 @@ export function WorkflowsPage() {
     return Object.entries(flowsByProduct).sort(([prodA], [prodB]) => {
       const timeA = productTimestamp[prodA] ?? 0;
       const timeB = productTimestamp[prodB] ?? 0;
-      return timeB - timeA; // Más reciente primero
+      return timeB - timeA;
     });
   }, [flowsByProduct, savedRompeVistos]);
 
@@ -622,6 +683,14 @@ export function WorkflowsPage() {
           : "Configurando automatización seleccionada"
       }
     >
+      {/* TOAST FLOTANTE DE ACCIÓN */}
+      {statusToast && (
+        <div className="fixed top-20 right-6 z-50 rounded-2xl border border-emerald-500/30 bg-emerald-500/15 backdrop-blur-md px-4 py-2.5 text-xs font-bold text-emerald-500 shadow-xl flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>{statusToast}</span>
+        </div>
+      )}
+
       {/* VISTA 1: INICIAL - SOLO LAS 5 TARJETAS PRINCIPALES CON EFECTO REBOTE DESDE ARRIBA */}
       {selectedTab === null ? (
         <div className="py-6 sm:py-10">
@@ -814,7 +883,7 @@ export function WorkflowsPage() {
                                   type="button"
                                   onClick={() => {
                                     setFilterChannel(ch.id);
-                                    setFilterStage("todos"); // Reset etapa al cambiar de canal
+                                    setFilterStage("todos");
                                   }}
                                   className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
                                     isActive
@@ -874,7 +943,7 @@ export function WorkflowsPage() {
                         </div>
                       </div>
 
-                      {/* 3. FILTRO POR ETAPA (ENTRANTE, INTERACCIÓN, ETC.) */}
+                      {/* 3. FILTRO POR ETAPA */}
                       <div className="space-y-1 pt-2.5 border-t border-border/50">
                         <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider block">
                           Filtrar por Etapa del Pedido:
@@ -927,7 +996,7 @@ export function WorkflowsPage() {
                       </div>
                     </div>
 
-                    {/* LISTADO DE PRODUCTOS (SOLO TARJETAS COLAPSADAS POR DEFECTO COMO EN IMAGEN 2, Y EL ÚLTIMO EDITADO PRIMERO) */}
+                    {/* LISTADO DE PRODUCTOS (TARJETAS COLAPSADAS POR DEFECTO COMO EN IMAGEN 2) */}
                     {sortedProductEntries.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
                         <Filter className="h-8 w-8 text-muted-foreground mx-auto" />
@@ -941,7 +1010,6 @@ export function WorkflowsPage() {
                           const isExpanded = !!expandedProducts[prodName];
                           const totalSteps = flows.reduce((sum, f) => sum + f.steps.length, 0);
 
-                          // Separar los flujos de este producto por Contraentrega y Shalom, ORDENADOS CRONOLÓGICAMENTE
                           const codFlows = flows
                             .filter((f) => f.shippingType === "contraentrega")
                             .sort((a, b) => getFlowEarliestSeconds(a) - getFlowEarliestSeconds(b));
@@ -955,7 +1023,7 @@ export function WorkflowsPage() {
                               key={prodName}
                               className="rounded-2xl border border-border bg-surface-2 overflow-hidden shadow-xs transition hover:border-emerald-500/40"
                             >
-                              {/* Cabecera del Producto (Solo tarjeta compacta, clic para desplegar como en la Imagen 2) */}
+                              {/* Cabecera del Producto (Tarjeta compacta) */}
                               <div
                                 onClick={() => toggleProductExpand(prodName)}
                                 className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-muted/30 transition select-none"
@@ -1095,7 +1163,7 @@ export function WorkflowsPage() {
                                     </div>
                                   )}
 
-                                  {/* SECCIÓN 2: ENVÍO POR AGENCIA SHALOM (PROVINCIAS) - ORDENADO CRONOLÓGICAMENTE */}
+                                  {/* SECCIÓN 2: ENVÍO POR AGENCIA SHALOM (PROVINCIAS) */}
                                   {shalomFlows.length > 0 && (
                                     <div className="space-y-2 pt-2">
                                       <div className="flex items-center gap-2">
@@ -1303,7 +1371,7 @@ export function WorkflowsPage() {
                             Elige a qué producto o combo de tu catálogo aplicará esta regla de recuperación:
                           </p>
 
-                          {/* 4 OPCIONES PRINCIPALES (LA 4TA DESPLIEGA LA LISTA EXTENDIDA) */}
+                          {/* 4 OPCIONES PRINCIPALES */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
                             {[
                               "Medias Bamboo (Pack 3x / 6x)",
@@ -1350,7 +1418,7 @@ export function WorkflowsPage() {
                             </button>
                           </div>
 
-                          {/* LISTA DESPLEGABLE DE MÁS PRODUCTOS (CON 'TODOS LOS PRODUCTOS AL FINAL') */}
+                          {/* LISTA DESPLEGABLE DE MÁS PRODUCTOS */}
                           {showExtendedCatalog && (
                             <div className="rounded-xl border border-border bg-surface p-3.5 space-y-2.5 animate-in fade-in">
                               <div className="flex items-center justify-between">
@@ -1945,61 +2013,864 @@ export function WorkflowsPage() {
             )}
 
             {/* ========================================================================= */}
-            {/* 3. CONFIRMACION Y LOGISTICA                                              */}
+            {/* 3. CONFIRMACIÓN Y LOGÍSTICA (NUEVAS OPCIONES COMPLETAS)                  */}
             {/* ========================================================================= */}
             {selectedTab === "confirmacion_logistica" && (
-              <div className="space-y-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
+              <div className="space-y-6 animate-in fade-in">
+                {/* Cabecera del Módulo con selector de Sub-Pestaña */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-4">
                   <div>
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                       <Truck className="h-5 w-5 text-emerald-500" />
                       Confirmación y Logística
                     </h2>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Gestiona plantillas de confirmación COD y avisos de guía Shalom fuera de ventana.
+                      Configura plantillas oficiales para validar compras COD y notificar envíos y recojo en agencias Shalom.
                     </p>
                   </div>
 
-                  <div className="flex items-center rounded-xl bg-surface-2 p-1 border border-border">
+                  {/* Sub-Pestañas: 1. Confirmaciones vs 2. Logística */}
+                  <div className="flex items-center rounded-xl bg-surface-2 p-1 border border-border self-start sm:self-auto">
                     <button
                       onClick={() => setConfLogSubTab("confirmaciones")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition ${
                         confLogSubTab === "confirmaciones"
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      1. Confirmaciones COD
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      1. Confirmaciones
                     </button>
                     <button
                       onClick={() => setConfLogSubTab("logistica")}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition ${
+                      className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-bold transition ${
                         confLogSubTab === "logistica"
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground"
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      2. Logística Shalom
+                      <Truck className="h-3.5 w-3.5" />
+                      2. Logística
                     </button>
                   </div>
                 </div>
 
-                {confLogSubTab === "confirmaciones" ? (
-                  <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-3">
-                    <h3 className="text-sm font-bold text-foreground">Mensaje de Confirmación (1 min post pedido)</h3>
-                    <textarea
-                      rows={3}
-                      value={confCopy}
-                      onChange={(e) => setConfCopy(e.target.value)}
-                      className="w-full rounded-xl border border-border bg-surface p-3 text-xs text-foreground outline-none focus:border-primary"
-                    />
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-3">
-                    <span className="text-xs font-bold text-primary uppercase">Plantilla Shalom de Retiro con DNI</span>
-                    <p className="text-xs text-foreground bg-surface p-3 rounded-xl border border-border">
-                      Hola [Nombre], tu pedido ya está en la agencia Shalom. Guía: [NumeroGuia]. Recuerda presentar tu DNI físico para el retiro.
+                {/* AVISO DE RECOMENDACIÓN PARA ECOMMERCE PERÚ */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 flex items-start gap-3 text-xs">
+                  <Sparkles className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-foreground">
+                      💡 Recomendación de WhatsApp Business API (Categoría Utilidad):
                     </p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      Estos mensajes clasifican como plantillas de <strong>Utilidad</strong>. Puedes enviarlos automáticamente fuera de la ventana de 24 horas. Recuerda usar las variables dinámicas entre corchetes para que los datos del cliente se rellenen de forma exacta.
+                    </p>
+                  </div>
+                </div>
+
+                {/* SUB-PESTAÑA 1: CONFIRMACIONES */}
+                {confLogSubTab === "confirmaciones" && (
+                  <div className="space-y-6">
+                    {/* MENSAJE 1.1: MENSAJE DE CONFIRMACIÓN */}
+                    <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 text-xs font-bold">
+                              1.1
+                            </span>
+                            <h3 className="text-sm font-bold text-foreground">
+                              Mensaje de Confirmación (Pedidos Regulares)
+                            </h3>
+                            {confMsgRegular.isLinked ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+                                🟢 Plantilla Activa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
+                                ⚪ Sin Configurar
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Se envía automáticamente a los clientes para reconfirmar su compra contraentrega o con pago anticipado.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openSim(confMsgRegular.newTemplateText)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-bold text-emerald-500 hover:bg-muted transition"
+                          >
+                            <Smartphone className="h-3.5 w-3.5" />
+                            Simular
+                          </button>
+
+                          {confMsgRegular.isLinked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgRegular((prev) => ({ ...prev, isLinked: false }));
+                                showToast("Plantilla de confirmación desvinculada");
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface p-1.5 text-xs text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition"
+                              title="Eliminar / Desvincular plantilla"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SWITCH DE LAS 2 OPCIONES: CREAR NUEVA vs YA TENGO MI PLANTILLA */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setConfMsgRegular((prev) => ({ ...prev, mode: "nueva" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            confMsgRegular.mode === "nueva"
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Crear Nueva Plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfMsgRegular((prev) => ({ ...prev, mode: "existente" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            confMsgRegular.mode === "existente"
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Ya tengo mi plantilla
+                        </button>
+                      </div>
+
+                      {/* CONTENIDO SEGÚN LA OPCIÓN SELECCIONADA */}
+                      {confMsgRegular.mode === "nueva" ? (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Plantilla Predeterminada de Confirmación:
+                          </label>
+
+                          <textarea
+                            rows={6}
+                            value={confMsgRegular.newTemplateText}
+                            onChange={(e) =>
+                              setConfMsgRegular((prev) => ({ ...prev, newTemplateText: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
+                          />
+
+                          {/* Chips para insertar variables en 1 clic */}
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">
+                              Insertar variables disponibles:
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {["Nombre", "Productos", "Agencia", "Guía", "Monto", "DNI", "Dirección"].map(
+                                (v) => (
+                                  <button
+                                    key={v}
+                                    type="button"
+                                    onClick={() =>
+                                      insertVariableIntoText(
+                                        confMsgRegular.newTemplateText,
+                                        v,
+                                        (val) => setConfMsgRegular((prev) => ({ ...prev, newTemplateText: val }))
+                                      )
+                                    }
+                                    className="rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-foreground hover:border-emerald-500 hover:text-emerald-500 transition"
+                                  >
+                                    + [{v}]
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgRegular((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Guardado ahora",
+                                }));
+                                showToast("¡Plantilla de confirmación guardada y activada en WhatsApp!");
+                              }}
+                              className="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              Guardar y Enviar a WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* OPCIÓN: YA TENGO MI PLANTILLA */
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Seleccionar Plantilla Registrada de Meta:
+                          </label>
+
+                          <select
+                            value={confMsgRegular.selectedTemplateId}
+                            onChange={(e) =>
+                              setConfMsgRegular((prev) => ({ ...prev, selectedTemplateId: e.target.value }))
+                            }
+                            className="w-full h-10 rounded-lg border border-border bg-surface-2 px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                          >
+                            {mockTemplates
+                              .filter((t) => t.category === "Utilidad" || t.status === "Aprobada")
+                              .map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name} — {t.status} (Enviados: {t.sent})
+                                </option>
+                              ))}
+                          </select>
+
+                          {/* Vista previa de la plantilla existente */}
+                          {(() => {
+                            const found = mockTemplates.find(
+                              (t) => t.id === confMsgRegular.selectedTemplateId
+                            );
+                            if (!found) return null;
+                            return (
+                              <div className="rounded-xl border border-border/80 bg-surface-2 p-3 text-xs space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground font-mono">{found.name}</span>
+                                  <span className="rounded bg-emerald-500/10 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
+                                    {found.status} ✅
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                  {found.body}
+                                </p>
+                              </div>
+                            );
+                          })()}
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgRegular((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Vinculada ahora",
+                                }));
+                                showToast("¡Plantilla existente vinculada exitosamente!");
+                              }}
+                              className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Vincular Plantilla Existente
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MENSAJE 1.2: MENSAJE PARA PEDIDOS PRELIMINARES */}
+                    <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-500 text-xs font-bold">
+                              1.2
+                            </span>
+                            <h3 className="text-sm font-bold text-foreground">
+                              Mensaje para Pedidos Preliminares (Carritos y Draft Orders)
+                            </h3>
+                            {confMsgPreliminar.isLinked ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+                                🟢 Plantilla Activa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
+                                ⚪ Sin Configurar
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Se envía automáticamente a prospectos que iniciaron el checkout o un pedido borrador pero no llegaron a completarlo.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openSim(confMsgPreliminar.newTemplateText)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-bold text-emerald-500 hover:bg-muted transition"
+                          >
+                            <Smartphone className="h-3.5 w-3.5" />
+                            Simular
+                          </button>
+
+                          {confMsgPreliminar.isLinked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgPreliminar((prev) => ({ ...prev, isLinked: false }));
+                                showToast("Plantilla para preliminares desvinculada");
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface p-1.5 text-xs text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition"
+                              title="Eliminar / Desvincular plantilla"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SWITCH DE LAS 2 OPCIONES */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setConfMsgPreliminar((prev) => ({ ...prev, mode: "nueva" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            confMsgPreliminar.mode === "nueva"
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Crear Nueva Plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfMsgPreliminar((prev) => ({ ...prev, mode: "existente" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            confMsgPreliminar.mode === "existente"
+                              ? "bg-emerald-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Ya tengo mi plantilla
+                        </button>
+                      </div>
+
+                      {confMsgPreliminar.mode === "nueva" ? (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Plantilla Predeterminada para Pedidos Preliminares:
+                          </label>
+
+                          <textarea
+                            rows={5}
+                            value={confMsgPreliminar.newTemplateText}
+                            onChange={(e) =>
+                              setConfMsgPreliminar((prev) => ({ ...prev, newTemplateText: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
+                          />
+
+                          {/* Variables */}
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">
+                              Insertar variables disponibles:
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {["Nombre", "Productos", "Monto", "Cupón", "Dirección"].map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() =>
+                                    insertVariableIntoText(
+                                      confMsgPreliminar.newTemplateText,
+                                      v,
+                                      (val) => setConfMsgPreliminar((prev) => ({ ...prev, newTemplateText: val }))
+                                    )
+                                  }
+                                  className="rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-foreground hover:border-emerald-500 hover:text-emerald-500 transition"
+                                >
+                                  + [{v}]
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgPreliminar((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Guardado ahora",
+                                }));
+                                showToast("¡Plantilla preliminar guardada y activada en WhatsApp!");
+                              }}
+                              className="rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              Guardar y Enviar a WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Seleccionar Plantilla Registrada de Meta:
+                          </label>
+
+                          <select
+                            value={confMsgPreliminar.selectedTemplateId}
+                            onChange={(e) =>
+                              setConfMsgPreliminar((prev) => ({ ...prev, selectedTemplateId: e.target.value }))
+                            }
+                            className="w-full h-10 rounded-lg border border-border bg-surface-2 px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                          >
+                            {mockTemplates.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name} — {t.status}
+                              </option>
+                            ))}
+                          </select>
+
+                          {(() => {
+                            const found = mockTemplates.find(
+                              (t) => t.id === confMsgPreliminar.selectedTemplateId
+                            );
+                            if (!found) return null;
+                            return (
+                              <div className="rounded-xl border border-border/80 bg-surface-2 p-3 text-xs space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground font-mono">{found.name}</span>
+                                  <span className="rounded bg-emerald-500/10 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
+                                    {found.status} ✅
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground text-[11px] leading-relaxed">
+                                  {found.body}
+                                </p>
+                              </div>
+                            );
+                          })()}
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setConfMsgPreliminar((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Vinculada ahora",
+                                }));
+                                showToast("¡Plantilla preliminar vinculada exitosamente!");
+                              }}
+                              className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Vincular Plantilla Existente
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* SUB-PESTAÑA 2: LOGÍSTICA */}
+                {confLogSubTab === "logistica" && (
+                  <div className="space-y-6">
+                    {/* MENSAJE 2.1: PEDIDO ENVIADO POR AGENCIA */}
+                    <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/15 text-sky-500 text-xs font-bold">
+                              2.1
+                            </span>
+                            <h3 className="text-sm font-bold text-foreground">
+                              Pedido Enviado por Agencia (Despacho y Guía)
+                            </h3>
+                            {logMsgEnviado.isLinked ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+                                🟢 Plantilla Activa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
+                                ⚪ Sin Configurar
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Aviso automático con el número de guía Shalom/Olva y el saldo pendiente para que el cliente haga seguimiento.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openSim(logMsgEnviado.newTemplateText)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-bold text-sky-500 hover:bg-muted transition"
+                          >
+                            <Smartphone className="h-3.5 w-3.5" />
+                            Simular
+                          </button>
+
+                          {logMsgEnviado.isLinked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgEnviado((prev) => ({ ...prev, isLinked: false }));
+                                showToast("Plantilla de despacho desvinculada");
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface p-1.5 text-xs text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition"
+                              title="Eliminar / Desvincular plantilla"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SWITCH DE LAS 2 OPCIONES */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setLogMsgEnviado((prev) => ({ ...prev, mode: "nueva" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            logMsgEnviado.mode === "nueva"
+                              ? "bg-sky-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Crear Nueva Plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLogMsgEnviado((prev) => ({ ...prev, mode: "existente" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            logMsgEnviado.mode === "existente"
+                              ? "bg-sky-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Ya tengo mi plantilla
+                        </button>
+                      </div>
+
+                      {logMsgEnviado.mode === "nueva" ? (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Plantilla Predeterminada de Pedido Enviado por Agencia:
+                          </label>
+
+                          <textarea
+                            rows={5}
+                            value={logMsgEnviado.newTemplateText}
+                            onChange={(e) =>
+                              setLogMsgEnviado((prev) => ({ ...prev, newTemplateText: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
+                          />
+
+                          {/* Variables */}
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">
+                              Insertar variables disponibles:
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {["Nombre", "Productos", "Agencia", "Guía", "Monto", "Ciudad"].map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() =>
+                                    insertVariableIntoText(
+                                      logMsgEnviado.newTemplateText,
+                                      v,
+                                      (val) => setLogMsgEnviado((prev) => ({ ...prev, newTemplateText: val }))
+                                    )
+                                  }
+                                  className="rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-foreground hover:border-sky-500 hover:text-sky-500 transition"
+                                >
+                                  + [{v}]
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgEnviado((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Guardado ahora",
+                                }));
+                                showToast("¡Plantilla de despacho guardada y activada en WhatsApp!");
+                              }}
+                              className="rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-sky-500 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              Guardar y Enviar a WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Seleccionar Plantilla Registrada de Meta:
+                          </label>
+
+                          <select
+                            value={logMsgEnviado.selectedTemplateId}
+                            onChange={(e) =>
+                              setLogMsgEnviado((prev) => ({ ...prev, selectedTemplateId: e.target.value }))
+                            }
+                            className="w-full h-10 rounded-lg border border-border bg-surface-2 px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                          >
+                            {mockTemplates.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name} — {t.status}
+                              </option>
+                            ))}
+                          </select>
+
+                          {(() => {
+                            const found = mockTemplates.find((t) => t.id === logMsgEnviado.selectedTemplateId);
+                            if (!found) return null;
+                            return (
+                              <div className="rounded-xl border border-border/80 bg-surface-2 p-3 text-xs space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground font-mono">{found.name}</span>
+                                  <span className="rounded bg-emerald-500/10 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
+                                    {found.status} ✅
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground text-[11px] leading-relaxed">{found.body}</p>
+                              </div>
+                            );
+                          })()}
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgEnviado((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Vinculada ahora",
+                                }));
+                                showToast("¡Plantilla de despacho vinculada exitosamente!");
+                              }}
+                              className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Vincular Plantilla Existente
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MENSAJE 2.2: EL PEDIDO LLEGÓ A LA AGENCIA */}
+                    <div className="rounded-2xl border border-border bg-surface-2 p-5 space-y-4 shadow-xs">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border/60 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/15 text-sky-500 text-xs font-bold">
+                              2.2
+                            </span>
+                            <h3 className="text-sm font-bold text-foreground">
+                              El Pedido Llegó (Aviso de Retiro con DNI Físico)
+                            </h3>
+                            {logMsgLlego.isLinked ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold">
+                                🟢 Plantilla Activa
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-muted text-muted-foreground px-2 py-0.5 text-[10px] font-medium">
+                                ⚪ Sin Configurar
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Notificación crítica cuando Shalom o la agencia reporta el paquete listo en ventanilla para evitar devoluciones.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openSim(logMsgLlego.newTemplateText)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-bold text-sky-500 hover:bg-muted transition"
+                          >
+                            <Smartphone className="h-3.5 w-3.5" />
+                            Simular
+                          </button>
+
+                          {logMsgLlego.isLinked && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgLlego((prev) => ({ ...prev, isLinked: false }));
+                                showToast("Plantilla de aviso de llegada desvinculada");
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface p-1.5 text-xs text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 transition"
+                              title="Eliminar / Desvincular plantilla"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SWITCH DE LAS 2 OPCIONES */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setLogMsgLlego((prev) => ({ ...prev, mode: "nueva" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            logMsgLlego.mode === "nueva"
+                              ? "bg-sky-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Crear Nueva Plantilla
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLogMsgLlego((prev) => ({ ...prev, mode: "existente" }))}
+                          className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition ${
+                            logMsgLlego.mode === "existente"
+                              ? "bg-sky-600 text-white shadow-xs"
+                              : "border border-border bg-surface text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Ya tengo mi plantilla
+                        </button>
+                      </div>
+
+                      {logMsgLlego.mode === "nueva" ? (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Plantilla Predeterminada de Aviso de Llegada a Agencia:
+                          </label>
+
+                          <textarea
+                            rows={5}
+                            value={logMsgLlego.newTemplateText}
+                            onChange={(e) =>
+                              setLogMsgLlego((prev) => ({ ...prev, newTemplateText: e.target.value }))
+                            }
+                            className="w-full rounded-xl border border-border bg-surface-2 p-3 text-xs text-foreground outline-none focus:border-primary font-mono leading-relaxed"
+                          />
+
+                          {/* Variables */}
+                          <div className="space-y-1.5">
+                            <span className="text-[11px] font-semibold text-muted-foreground block">
+                              Insertar variables disponibles:
+                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {["Nombre", "Agencia", "Ciudad", "Guía", "DNI", "Productos"].map((v) => (
+                                <button
+                                  key={v}
+                                  type="button"
+                                  onClick={() =>
+                                    insertVariableIntoText(
+                                      logMsgLlego.newTemplateText,
+                                      v,
+                                      (val) => setLogMsgLlego((prev) => ({ ...prev, newTemplateText: val }))
+                                    )
+                                  }
+                                  className="rounded-lg border border-border bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-foreground hover:border-sky-500 hover:text-sky-500 transition"
+                                >
+                                  + [{v}]
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgLlego((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Guardado ahora",
+                                }));
+                                showToast("¡Plantilla de llegada guardada y activada en WhatsApp!");
+                              }}
+                              className="rounded-xl bg-sky-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-sky-500 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Send className="h-3.5 w-3.5" />
+                              Guardar y Enviar a WhatsApp
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+                          <label className="block text-xs font-bold text-foreground uppercase tracking-wider">
+                            Seleccionar Plantilla Registrada de Meta:
+                          </label>
+
+                          <select
+                            value={logMsgLlego.selectedTemplateId}
+                            onChange={(e) =>
+                              setLogMsgLlego((prev) => ({ ...prev, selectedTemplateId: e.target.value }))
+                            }
+                            className="w-full h-10 rounded-lg border border-border bg-surface-2 px-3 text-xs font-bold text-foreground outline-none focus:border-primary"
+                          >
+                            {mockTemplates.map((t) => (
+                              <option key={t.id} value={t.id}>
+                                {t.name} — {t.status}
+                              </option>
+                            ))}
+                          </select>
+
+                          {(() => {
+                            const found = mockTemplates.find((t) => t.id === logMsgLlego.selectedTemplateId);
+                            if (!found) return null;
+                            return (
+                              <div className="rounded-xl border border-border/80 bg-surface-2 p-3 text-xs space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold text-foreground font-mono">{found.name}</span>
+                                  <span className="rounded bg-emerald-500/10 text-emerald-500 px-2 py-0.5 text-[10px] font-bold">
+                                    {found.status} ✅
+                                  </span>
+                                </div>
+                                <p className="text-muted-foreground text-[11px] leading-relaxed">{found.body}</p>
+                              </div>
+                            );
+                          })()}
+
+                          <div className="pt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLogMsgLlego((prev) => ({
+                                  ...prev,
+                                  isLinked: true,
+                                  updatedAt: "Vinculada ahora",
+                                }));
+                                showToast("¡Plantilla de llegada vinculada exitosamente!");
+                              }}
+                              className="rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-primary-foreground hover:opacity-90 transition shadow-sm inline-flex items-center gap-2"
+                            >
+                              <Link2 className="h-3.5 w-3.5" />
+                              Vincular Plantilla Existente
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -2163,7 +3034,7 @@ export function WorkflowsPage() {
                 </div>
 
                 <div className="flex flex-col items-end">
-                  <div className="max-w-[88%] rounded-2xl rounded-tr-xs bg-[#005c4b] p-3 text-white shadow-xs leading-relaxed text-[11px]">
+                  <div className="max-w-[88%] rounded-2xl rounded-tr-xs bg-[#005c4b] p-3 text-white shadow-xs leading-relaxed text-[11px] whitespace-pre-line">
                     <p>{simulatorMessage}</p>
                     <div className="mt-1 flex items-center justify-end gap-1 text-[9px] text-white/70">
                       <span>12:30</span>
