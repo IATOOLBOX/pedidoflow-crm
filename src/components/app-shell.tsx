@@ -109,17 +109,17 @@ export function AppShell({
         <div className="flex items-center justify-between px-3.5 py-4 border-b border-sidebar-border/50">
           {!isSidebarCollapsed ? (
             <div className="flex items-center gap-2.5 px-1">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground shadow-xs">
-                <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <ShoppingBag className="h-4 w-4" strokeWidth={2} />
               </div>
               <div className="leading-tight">
-                <p className="text-[15px] font-bold text-sidebar-accent-foreground">PedidoFlow</p>
-                <p className="text-[11px] text-sidebar-foreground/60">CRM contraentrega</p>
+                <p className="text-sm font-semibold text-sidebar-accent-foreground tracking-tight">PedidoFlow</p>
+                <p className="text-[11px] text-sidebar-foreground/50">CRM ecommerce</p>
               </div>
             </div>
           ) : (
-            <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
-              <ShoppingBag className="h-5 w-5" strokeWidth={2} />
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+              <ShoppingBag className="h-4 w-4" strokeWidth={2} />
             </div>
           )}
 
@@ -151,20 +151,20 @@ export function AppShell({
                 key={item.to}
                 to={item.to}
                 title={isSidebarCollapsed ? item.label : undefined}
-                className={`flex items-center rounded-xl px-3 py-2.5 text-sm transition-all ${
+                className={`flex items-center rounded-lg px-3 py-2 text-[13px] transition-all ${
                   isSidebarCollapsed ? "justify-center" : "gap-3"
                 } ${
                   active
-                    ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground shadow-2xs"
-                    : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
                 }`}
               >
-                <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                 {!isSidebarCollapsed && (
                   <>
                     <span className="flex-1 truncate">{item.label}</span>
                     {"badge" in item && item.badge ? (
-                      <span className="rounded-full bg-status-compromiso px-1.5 py-0.5 text-[10px] font-bold text-sidebar">
+                      <span className="rounded-full bg-sidebar-primary/20 text-sidebar-primary px-1.5 py-0.5 text-[10px] font-medium">
                         {item.badge}
                       </span>
                     ) : null}
@@ -196,10 +196,10 @@ export function AppShell({
       {/* ÁREA DE CONTENIDO */}
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b border-border bg-surface/90 px-4 backdrop-blur lg:px-6">
-          <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted cursor-pointer">
-            <Store className="h-4 w-4 text-primary" strokeWidth={1.75} />
+          <button className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-foreground hover:bg-muted cursor-pointer">
+            <Store className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
             Tienda Andina
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
 
           <div className="relative hidden max-w-sm flex-1 md:block">
@@ -223,7 +223,7 @@ export function AppShell({
                 }`}
                 title="Tema Normal (Claro)"
               >
-                <Sun className="h-3.5 w-3.5 text-amber-500" />
+                <Sun className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Normal</span>
               </button>
               <button
@@ -236,7 +236,7 @@ export function AppShell({
                 }`}
                 title="Tema Medio Oscuro (Pizarra / Twilight)"
               >
-                <CloudMoon className="h-3.5 w-3.5 text-sky-400" />
+                <CloudMoon className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Medio</span>
               </button>
               <button
@@ -249,17 +249,17 @@ export function AppShell({
                 }`}
                 title="Tema Oscuro (Deep Dark)"
               >
-                <Moon className="h-3.5 w-3.5 text-indigo-400" />
+                <Moon className="h-3.5 w-3.5" />
                 <span className="hidden sm:inline">Oscuro</span>
               </button>
             </div>
 
             <button className="relative rounded-lg p-2 hover:bg-muted cursor-pointer" title="Notificaciones">
-              <Bell className="h-[18px] w-[18px] text-muted-foreground" strokeWidth={1.75} />
+              <Bell className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-status-noconfirma" />
             </button>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
                 AV
               </div>
               <div className="hidden leading-tight sm:block">
@@ -272,8 +272,8 @@ export function AppShell({
 
         <main className={`flex-1 px-4 py-6 lg:px-8 ${contentClassName}`}>
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">{title}</h1>
-            {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+            <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
+            {subtitle ? <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p> : null}
           </div>
           {children}
         </main>
