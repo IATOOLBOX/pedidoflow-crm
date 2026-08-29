@@ -3,6 +3,7 @@ import { useState } from "react";
 import { MapPin, Plus, Trash2, Workflow, ArrowRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EquipoSection } from "@/components/equipo-section";
+import { CoberturaSection } from "@/components/cobertura-section";
 
 export const Route = createFileRoute("/configuracion")({
   head: () => ({
@@ -11,12 +12,12 @@ export const Route = createFileRoute("/configuracion")({
       {
         name: "description",
         content:
-          "Configura zonas locales vs. agencia, recordatorios de WhatsApp, monto de adelanto, equipo y plan de PedidoFlow.",
+          "Configura cobertura de envíos (Shalom vs Local), recordatorios de WhatsApp, monto de adelanto, equipo y plan de PedidoFlow.",
       },
       { property: "og:title", content: "Configuración — PedidoFlow" },
       {
         property: "og:description",
-        content: "Reglas de contraentrega, seguimiento de mensajes, equipo y facturación.",
+        content: "Reglas de contraentrega, cobertura de envíos, equipo y facturación.",
       },
     ],
   }),
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/configuracion")({
 
 const tabs = [
   "Datos de la tienda",
-  "Reglas de contraentrega",
+  "Cobertura de envíos",
   "Seguimiento",
   "Adelanto",
   "Equipo y roles",
@@ -50,8 +51,8 @@ function ConfiguracionPage() {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-lg px-3 py-2.5 text-left text-sm font-medium whitespace-nowrap transition ${
-                tab === t ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted"
+              className={`rounded-lg px-3 py-2.5 text-left text-sm font-medium whitespace-nowrap transition cursor-pointer ${
+                tab === t ? "bg-accent text-accent-foreground font-semibold" : "text-muted-foreground hover:bg-muted"
               }`}
             >
               {t}
@@ -73,7 +74,7 @@ function ConfiguracionPage() {
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-sm font-bold text-primary-foreground">
                     TA
                   </div>
-                  <button className="rounded-lg border border-border px-3 py-2 text-sm font-semibold hover:bg-muted">
+                  <button className="rounded-lg border border-border px-3 py-2 text-sm font-semibold hover:bg-muted cursor-pointer">
                     Subir imagen
                   </button>
                 </div>
@@ -88,42 +89,8 @@ function ConfiguracionPage() {
             </div>
           ) : null}
 
-          {tab === "Reglas de contraentrega" ? (
-            <div className="space-y-5">
-              <div>
-                <h2 className="text-base font-bold">Zonas de entrega</h2>
-                <p className="text-sm text-muted-foreground">
-                  Define qué ciudades se atienden con motorizado local y cuáles se envían por agencia.
-                </p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {[
-                  { title: "Local (contraentrega)", zones: ["Lima Centro", "Miraflores", "San Miguel", "Los Olivos", "Comas"] },
-                  { title: "Agencia (Shalom)", zones: ["Arequipa", "Trujillo", "Cusco", "Piura", "Chiclayo"] },
-                ].map((g) => (
-                  <div key={g.title} className="rounded-xl border border-border p-4">
-                    <p className="mb-3 text-sm font-semibold">{g.title}</p>
-                    <ul className="space-y-2">
-                      {g.zones.map((z) => (
-                        <li
-                          key={z}
-                          className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-sm"
-                        >
-                          <MapPin className="h-4 w-4 text-muted-foreground" strokeWidth={1.75} />
-                          {z}
-                          <button className="ml-auto text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" strokeWidth={1.75} />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                    <button className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-                      <Plus className="h-3.5 w-3.5" /> Agregar zona
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+          {tab === "Cobertura de envíos" ? (
+            <CoberturaSection />
           ) : null}
 
           {tab === "Seguimiento" ? (

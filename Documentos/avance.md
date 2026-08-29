@@ -40,11 +40,16 @@ Objetivo: Terminar de maquetar en Antigravity los módulos pendientes para tener
   - KPIs de catálogo: Total de productos, Stock saludable, Stock bajo/crítico, Agotados y Valoración del inventario en S/.
   - Vista dual: Tabla empresarial compacta con ajuste de stock en 1-clic (+ / -) y Vista de cuadrícula de tarjetas.
   - Filtros multivariables: Búsqueda por nombre y SKU, filtro por estado de stock y filtro por categorías.
-  - Modal de creación y edición con SKU, precio de venta, costo, stock y umbral mínimo de alerta.
+  - Modal con galería multimedia y contexto IA por foto/video, variaciones, ofertas por cantidad y botones de exportar/importar CSV.
   - Sincronización simulada en tiempo real con Shopify con feedback y timestamp.
+- `[x]` **Cobertura de Envíos (Configuración -> "Cobertura de envíos")**:
+  - Módulo completo de asignación de zonas: Contraentrega Local (Lima y Callao con motorizado) vs. Agencia Shalom (Provincias con recojo o domicilio).
+  - Simulador inteligente de despacho en tiempo real: ingresas ciudad o distrito y calcula cobertura, agencia, flete, adelanto de seguridad y previsualización del mensaje para WhatsApp.
+  - Matriz de los 25 departamentos del Perú con toggles rápidos para alternar Local / Shalom y selector de operadores (Shalom, Olva Courier, Marvisur, Motorizado Propio).
+  - Políticas globales de flete: monto de adelanto de seguridad (S/ 25), umbral de envío gratis (S/ 150) y notificación automática de guía de remisión Shalom por WhatsApp.
+  - Modal para personalizar tarifas, adelanto requerido y tiempos de entrega por departamento.
 
 ### 📝 Pendiente por construir visualmente:
-- `[ ]` **Cobertura de Envíos**: Configuración visual de agencias por zona (Shalom vs Contraentrega).
 - `[ ]` **Módulo de Reportes**: Pantalla visual de estadísticas y exportables.
 
 ---
