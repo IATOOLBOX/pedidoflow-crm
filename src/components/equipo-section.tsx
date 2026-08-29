@@ -31,6 +31,7 @@ import {
   FileText,
   Plug,
   Settings,
+  Package,
 } from "lucide-react";
 
 const ROLE_ICONS: Record<UserRole, any> = {
@@ -51,6 +52,7 @@ const CRM_MODULES_LIST: { id: CRMModule; label: string; icon: any; color: string
   { id: "dashboard", label: "Dashboard principal", icon: LayoutDashboard, color: "text-indigo-500" },
   { id: "pedidos", label: "Gestión de Pedidos", icon: ShoppingBag, color: "text-blue-500" },
   { id: "confirmados", label: "Pedidos Confirmados", icon: Truck, color: "text-emerald-500" },
+  { id: "productos", label: "Catálogo de Productos", icon: Package, color: "text-violet-500" },
   { id: "conversaciones", label: "Inbox Conversaciones", icon: MessagesSquare, color: "text-purple-500" },
   { id: "pagos", label: "Pagos por verificar", icon: ReceiptText, color: "text-amber-500" },
   { id: "clientes", label: "Directorio Clientes", icon: UsersIcon, color: "text-teal-500" },

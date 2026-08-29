@@ -35,8 +35,15 @@ Objetivo: Terminar de maquetar en Antigravity los módulos pendientes para tener
   - Tarjetas de KPIs (Usuarios Activos, Admin, Ventas, Logística).
   - Modal para Crear e Invitar nuevos miembros y asignar permisos específicos en base al rol de cada usuario.
 
+- `[x]` **Catálogo de Productos (`/productos`)**:
+  - Panel visual de control de inventario y stock para ecommerce contraentrega.
+  - KPIs de catálogo: Total de productos, Stock saludable, Stock bajo/crítico, Agotados y Valoración del inventario en S/.
+  - Vista dual: Tabla empresarial compacta con ajuste de stock en 1-clic (+ / -) y Vista de cuadrícula de tarjetas.
+  - Filtros multivariables: Búsqueda por nombre y SKU, filtro por estado de stock y filtro por categorías.
+  - Modal de creación y edición con SKU, precio de venta, costo, stock y umbral mínimo de alerta.
+  - Sincronización simulada en tiempo real con Shopify con feedback y timestamp.
+
 ### 📝 Pendiente por construir visualmente:
-- `[ ]` **Catálogo de Productos**: Módulo visual para el control básico de stock.
 - `[ ]` **Cobertura de Envíos**: Configuración visual de agencias por zona (Shalom vs Contraentrega).
 - `[ ]` **Módulo de Reportes**: Pantalla visual de estadísticas y exportables.
 

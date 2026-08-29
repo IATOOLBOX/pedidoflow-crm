@@ -19,6 +19,7 @@ import { Route as IntegracionesRouteImport } from './routes/integraciones'
 import { Route as PagosRouteImport } from './routes/pagos'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as PlantillasRouteImport } from './routes/plantillas'
+import { Route as ProductosRouteImport } from './routes/productos'
 import { Route as WorkflowsRouteImport } from './routes/workflows'
 
 const IndexRoute = IndexRouteImport.update({
@@ -71,6 +72,11 @@ const PlantillasRoute = PlantillasRouteImport.update({
   path: '/plantillas',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductosRoute = ProductosRouteImport.update({
+  id: '/productos',
+  path: '/productos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WorkflowsRoute = WorkflowsRouteImport.update({
   id: '/workflows',
   path: '/workflows',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
+  '/productos': typeof ProductosRoute
   '/workflows': typeof WorkflowsRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
+  '/productos': typeof ProductosRoute
   '/workflows': typeof WorkflowsRoute
 }
 export interface FileRoutesById {
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/pagos': typeof PagosRoute
   '/pedidos': typeof PedidosRoute
   '/plantillas': typeof PlantillasRoute
+  '/productos': typeof ProductosRoute
   '/workflows': typeof WorkflowsRoute
 }
 export interface FileRouteTypes {
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
+    | '/productos'
     | '/workflows'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
+    | '/productos'
     | '/workflows'
   id:
     | '__root__'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/pagos'
     | '/pedidos'
     | '/plantillas'
+    | '/productos'
     | '/workflows'
   fileRoutesById: FileRoutesById
 }
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   PagosRoute: typeof PagosRoute
   PedidosRoute: typeof PedidosRoute
   PlantillasRoute: typeof PlantillasRoute
+  ProductosRoute: typeof ProductosRoute
   WorkflowsRoute: typeof WorkflowsRoute
 }
 
@@ -245,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlantillasRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/productos': {
+      id: '/productos'
+      path: '/productos'
+      fullPath: '/productos'
+      preLoaderRoute: typeof ProductosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/workflows': {
       id: '/workflows'
       path: '/workflows'
@@ -266,6 +286,7 @@ const rootRouteChildren: RootRouteChildren = {
   PagosRoute: PagosRoute,
   PedidosRoute: PedidosRoute,
   PlantillasRoute: PlantillasRoute,
+  ProductosRoute: ProductosRoute,
   WorkflowsRoute: WorkflowsRoute,
 }
 export const routeTree = rootRouteImport

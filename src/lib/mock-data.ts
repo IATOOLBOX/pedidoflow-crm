@@ -1304,6 +1304,7 @@ export type CRMModule =
   | "dashboard"
   | "pedidos"
   | "confirmados"
+  | "productos"
   | "conversaciones"
   | "pagos"
   | "clientes"
@@ -1387,3 +1388,349 @@ export const users: User[] = [
     expiresAt: "25 de Agosto, 2026",
   },
 ];
+
+export type ProductCategory =
+  | "Calzado"
+  | "Hogar y Cocina"
+  | "Tecnología"
+  | "Moda y Accesorios"
+  | "Belleza y Cuidado"
+  | "Deportes y Aire Libre";
+
+export type ProductStatus = "Activo" | "Pausado" | "Agotado";
+
+export type ProductMedia = {
+  id: string;
+  url: string;
+  aiContext: string;
+  isMain: boolean;
+  type: "image" | "video";
+};
+
+export type SalesStyle =
+  | "Venta directa"
+  | "Venta consultiva (preguntas y dolor)"
+  | "Upsell agresivo"
+  | "Cierre con oferta y descuento"
+  | "Soporte técnico y demostración";
+
+export type ProductVariantType = {
+  id: string;
+  name: string;
+  options: string[];
+};
+
+export type QuantityOffer = {
+  id: string;
+  quantity: number;
+  price: number;
+  label?: string | undefined;
+  savings?: number | undefined;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  sku: string;
+  category: ProductCategory;
+  price: number;
+  costPrice: number;
+  stock: number;
+  minStockAlert: number;
+  status: ProductStatus;
+  salesCount: number;
+  shopifySynced: boolean;
+  updatedAt: string;
+  description?: string | undefined;
+  tags?: string[] | undefined;
+  media?: ProductMedia[] | undefined;
+  salesStyle?: SalesStyle | undefined;
+  supplier?: string | undefined;
+  aiKnowledgeBase?: string | undefined;
+  productUrl?: string | undefined;
+  allowBackorder?: boolean | undefined;
+  hasVariants?: boolean | undefined;
+  variantTypes?: ProductVariantType[] | undefined;
+  quantityOffers?: QuantityOffer[] | undefined;
+};
+
+export const products: Product[] = [
+  {
+    id: "prod-1",
+    name: "Zapatillas Urban Pro talla 42",
+    sku: "ZAP-URB-42",
+    category: "Calzado",
+    price: 149,
+    costPrice: 65,
+    stock: 24,
+    minStockAlert: 8,
+    status: "Activo",
+    salesCount: 142,
+    shopifySynced: true,
+    updatedAt: "Hoy, 10:15",
+    description: "Zapatillas urbanas de alta durabilidad con suela antideslizante y plantilla ergonómica.",
+    tags: ["Top Ventas", "Contraentrega"],
+    salesStyle: "Venta directa",
+    supplier: "Aliclik Mayorista Lima",
+    productUrl: "https://tiendaandina.pe/products/zapatillas-urban-pro",
+    allowBackorder: true,
+    aiKnowledgeBase: "¡Zapatillas diseñadas para soportar el ritmo diario en la ciudad! 🔥\n\nBeneficios clave para el cliente:\n- Suela de caucho vulcanizado con amortiguación anti-impacto (adiós al dolor de talón).\n- Material transpirable que evita malos olores y sudoración excesiva.\n- Tallas estándar peruanas (horma completa).\n\nObjeciones frecuentes y respuestas IA:\n- ¿Y si no me queda la talla? Tienes cambio gratuito en Lima contraentrega o envío de talla alternativa.\n- ¿Hacen envíos a provincia? Sí, por Shalom con recojo en agencia y pago contraentrega o adelanto mínimo de S/ 25.",
+    media: [
+      {
+        id: "med-1",
+        url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop&q=80",
+        aiContext: "Foto frontal principal que resalta el color rojo vibrante y el acabado premium. Enviar en la bienvenida inicial.",
+        isMain: true,
+        type: "image",
+      },
+      {
+        id: "med-2",
+        url: "https://images.unsplash.com/photo-1608231387042-66d1773070a5?w=600&auto=format&fit=crop&q=80",
+        aiContext: "Detalle de la suela antideslizante y textura lateral. Enviar cuando el cliente pregunte por la durabilidad o materiales.",
+        isMain: false,
+        type: "image",
+      },
+    ],
+  },
+  {
+    id: "prod-2",
+    name: "Medias deportivas (pack x3)",
+    sku: "MED-DEP-03",
+    category: "Moda y Accesorios",
+    price: 40,
+    costPrice: 12,
+    stock: 58,
+    minStockAlert: 15,
+    status: "Activo",
+    salesCount: 210,
+    shopifySynced: true,
+    updatedAt: "Ayer, 18:30",
+    description: "Pack de 3 pares de medias deportivas transpirables de algodón peinado.",
+    tags: ["Accesorio", "Upsell"],
+  },
+  {
+    id: "prod-3",
+    name: "Set de ollas antiadherentes 6 pz",
+    sku: "OLL-ANT-06",
+    category: "Hogar y Cocina",
+    price: 249,
+    costPrice: 120,
+    stock: 7,
+    minStockAlert: 10,
+    status: "Activo",
+    salesCount: 88,
+    shopifySynced: true,
+    updatedAt: "Hoy, 09:20",
+    description: "Batería de cocina de aluminio prensado con triple capa antiadherente de granito.",
+    tags: ["Pesado", "Shalom"],
+  },
+  {
+    id: "prod-4",
+    name: "Reloj inteligente FitBand 5",
+    sku: "FIT-BND-05",
+    category: "Tecnología",
+    price: 129,
+    costPrice: 48,
+    stock: 18,
+    minStockAlert: 6,
+    status: "Activo",
+    salesCount: 95,
+    shopifySynced: true,
+    updatedAt: "Hoy, 08:45",
+    description: "Pulsera de actividad con monitor de ritmo cardíaco, oxígeno en sangre y notificaciones de WhatsApp.",
+    tags: ["Tecnología", "Garantía"],
+  },
+  {
+    id: "prod-5",
+    name: "Freidora de aire 5.5L Digital",
+    sku: "FRE-AIR-55",
+    category: "Hogar y Cocina",
+    price: 279,
+    costPrice: 135,
+    stock: 4,
+    minStockAlert: 8,
+    status: "Activo",
+    salesCount: 164,
+    shopifySynced: true,
+    updatedAt: "Hoy, 07:30",
+    description: "Freidora de aire de gran capacidad con panel táctil de 8 programas preestablecidos.",
+    tags: ["Top Ventas", "Electro"],
+  },
+  {
+    id: "prod-6",
+    name: "Molde de silicona para freidora",
+    sku: "MOL-SIL-01",
+    category: "Hogar y Cocina",
+    price: 20,
+    costPrice: 5,
+    stock: 85,
+    minStockAlert: 20,
+    status: "Activo",
+    salesCount: 320,
+    shopifySynced: true,
+    updatedAt: "Hace 2 días",
+    description: "Molde reutilizable y antiadherente resistente a 240°C para freidoras de aire de 4 a 6L.",
+    tags: ["Upsell Estrella"],
+  },
+  {
+    id: "prod-7",
+    name: "Audífonos inalámbricos BassPod Pro",
+    sku: "AUD-BAS-PRO",
+    category: "Tecnología",
+    price: 99,
+    costPrice: 35,
+    stock: 0,
+    minStockAlert: 10,
+    status: "Agotado",
+    salesCount: 230,
+    shopifySynced: true,
+    updatedAt: "Hace 3 horas",
+    description: "Audífonos Bluetooth 5.3 con cancelación de ruido ambiental y estuche de carga rápida.",
+    tags: ["Agotado", "Por reponer"],
+  },
+  {
+    id: "prod-8",
+    name: "Plancha de cabello Ionic Ceramic",
+    sku: "PLA-ION-02",
+    category: "Belleza y Cuidado",
+    price: 159,
+    costPrice: 62,
+    stock: 19,
+    minStockAlert: 6,
+    status: "Activo",
+    salesCount: 76,
+    shopifySynced: true,
+    updatedAt: "Ayer, 14:10",
+    description: "Plancha alisadora profesional con placas de cerámica ionizada y temperatura hasta 230°C.",
+    tags: ["Belleza"],
+  },
+  {
+    id: "prod-9",
+    name: "Mochila antirrobo impermeable Nomad",
+    sku: "MOC-NOM-01",
+    category: "Moda y Accesorios",
+    price: 105,
+    costPrice: 42,
+    stock: 14,
+    minStockAlert: 5,
+    status: "Activo",
+    salesCount: 118,
+    shopifySynced: true,
+    updatedAt: "Ayer, 11:25",
+    description: "Mochila ejecutiva impermeable con puerto de carga USB y cremalleras de seguridad ocultas.",
+    tags: ["Urbano"],
+  },
+  {
+    id: "prod-10",
+    name: "Organizador de cocina 3 niveles",
+    sku: "ORG-COC-03",
+    category: "Hogar y Cocina",
+    price: 75,
+    costPrice: 28,
+    stock: 31,
+    minStockAlert: 10,
+    status: "Activo",
+    salesCount: 64,
+    shopifySynced: true,
+    updatedAt: "Hace 3 días",
+    description: "Estante metálico multiuso para condimentos y vajilla con acabado anticorrosivo.",
+    tags: ["Hogar"],
+  },
+  {
+    id: "prod-11",
+    name: "Bicicleta plegable Urbana 20\"",
+    sku: "BIC-PLE-20",
+    category: "Deportes y Aire Libre",
+    price: 289,
+    costPrice: 150,
+    stock: 2,
+    minStockAlert: 5,
+    status: "Activo",
+    salesCount: 42,
+    shopifySynced: false,
+    updatedAt: "Hace 4 días",
+    description: "Bicicleta plegable ligera de aluminio de 7 velocidades, ideal para transporte en ciudad.",
+    tags: ["Alto Ticket", "Shalom"],
+  },
+  {
+    id: "prod-12",
+    name: "Termo inteligente digital 750ml",
+    sku: "TER-DIG-75",
+    category: "Hogar y Cocina",
+    price: 139,
+    costPrice: 50,
+    stock: 27,
+    minStockAlert: 8,
+    status: "Activo",
+    salesCount: 89,
+    shopifySynced: true,
+    updatedAt: "Hoy, 11:00",
+    description: "Botella térmica de acero inoxidable 316 con pantalla LED táctil indicadora de temperatura.",
+    tags: ["Regalo"],
+  },
+  {
+    id: "prod-13",
+    name: "Silla ergonómica ProDesk giratoria",
+    sku: "SIL-ERG-PD",
+    category: "Hogar y Cocina",
+    price: 380,
+    costPrice: 210,
+    stock: 5,
+    minStockAlert: 4,
+    status: "Activo",
+    salesCount: 37,
+    shopifySynced: true,
+    updatedAt: "Ayer, 16:40",
+    description: "Silla de oficina con soporte lumbar ajustable, malla transpirable y ruedas silenciosas.",
+    tags: ["Muebles", "Contraentrega Local"],
+  },
+  {
+    id: "prod-14",
+    name: "Alfombrilla Gamer XL 80x30",
+    sku: "ALF-GAM-XL",
+    category: "Tecnología",
+    price: 40,
+    costPrice: 14,
+    stock: 45,
+    minStockAlert: 12,
+    status: "Activo",
+    salesCount: 152,
+    shopifySynced: true,
+    updatedAt: "Hace 5 días",
+    description: "Mousepad extendido antideslizante con bordes cosidos reforzados e impresión HD.",
+    tags: ["Upsell"],
+  },
+  {
+    id: "prod-15",
+    name: "Kit de brochas de maquillaje x12",
+    sku: "KIT-BRO-12",
+    category: "Belleza y Cuidado",
+    price: 89,
+    costPrice: 30,
+    stock: 0,
+    minStockAlert: 10,
+    status: "Agotado",
+    salesCount: 175,
+    shopifySynced: true,
+    updatedAt: "Ayer, 09:15",
+    description: "Juego completo de brochas sintéticas ultrasuaves con estuche de cuero ecológico.",
+    tags: ["Agotado"],
+  },
+  {
+    id: "prod-16",
+    name: "Aspiradora inalámbrica Cyclone 2 en 1",
+    sku: "ASP-CYC-02",
+    category: "Hogar y Cocina",
+    price: 199,
+    costPrice: 85,
+    stock: 11,
+    minStockAlert: 5,
+    status: "Activo",
+    salesCount: 58,
+    shopifySynced: true,
+    updatedAt: "Hoy, 10:40",
+    description: "Aspiradora de mano recargable de alta succión con filtro HEPA lavable para auto y hogar.",
+    tags: ["Limpieza"],
+  },
+];
+
